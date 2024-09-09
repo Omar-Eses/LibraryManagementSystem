@@ -3,6 +3,7 @@ using System;
 using LibraryManagementSystem.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LibraryManagementSystem.Migrations
 {
     [DbContext(typeof(LMSContext))]
-    partial class LMSContextModelSnapshot : ModelSnapshot
+    [Migration("20240905110206_UpdateAutoIncrementAndNotRequired")]
+    partial class UpdateAutoIncrementAndNotRequired
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,27 +27,22 @@ namespace LibraryManagementSystem.Migrations
 
             modelBuilder.Entity("LibraryManagementSystem.Models.Authors", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
                         .HasColumnType("text");
 
                     b.Property<string>("AuthorName")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("text");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<string>("HashedPassword")
                         .IsRequired()
@@ -52,11 +50,7 @@ namespace LibraryManagementSystem.Migrations
 
                     b.Property<string>("Phone")
                         .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("character varying(15)");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -65,17 +59,20 @@ namespace LibraryManagementSystem.Migrations
 
             modelBuilder.Entity("LibraryManagementSystem.Models.Books", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<long>("AuthorId")
-                        .HasColumnType("bigint");
+                    b.Property<int>("AuthorId")
+                        .HasColumnType("integer");
 
-                    b.Property<long?>("AuthorsId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("AuthorName")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("AuthorsId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("BookDescription")
                         .IsRequired()
@@ -99,21 +96,18 @@ namespace LibraryManagementSystem.Migrations
                     b.Property<int>("BorrowedStatus")
                         .HasColumnType("integer");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("ISBN")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<int?>("UsersId")
+                        .HasColumnType("integer");
 
-                    b.Property<long?>("UsersId")
-                        .HasColumnType("bigint");
+                    b.Property<int?>("borrowedByUserId")
+                        .HasColumnType("integer");
 
-                    b.Property<long?>("borrowedByUserId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("borrowedByUserName")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -126,11 +120,11 @@ namespace LibraryManagementSystem.Migrations
 
             modelBuilder.Entity("LibraryManagementSystem.Models.BorrowingRecord", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<long>("BookId")
                         .HasColumnType("bigint");
@@ -141,10 +135,7 @@ namespace LibraryManagementSystem.Migrations
                     b.Property<DateOnly>("DueDate")
                         .HasColumnType("date");
 
-                    b.Property<decimal>("Fine")
-                        .HasColumnType("numeric");
-
-                    b.Property<DateOnly?>("ReturnedDate")
+                    b.Property<DateOnly>("ReturnedDate")
                         .HasColumnType("date");
 
                     b.Property<long>("UserId")
@@ -157,42 +148,29 @@ namespace LibraryManagementSystem.Migrations
 
             modelBuilder.Entity("LibraryManagementSystem.Models.Users", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                        .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
-                    b.Property<string>("HashedPassword")
+                    b.Property<decimal>("TotalFine")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("UserHashedPassword")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("NumberOfBooksAllowed")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("character varying(15)");
-
-                    b.Property<decimal?>("TotalFine")
-                        .HasColumnType("numeric");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Username")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
+
+                    b.Property<int>("numberOfBooksAllowed")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
