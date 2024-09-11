@@ -3,6 +3,7 @@ using System;
 using LibraryManagementSystem.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LibraryManagementSystem.Migrations
 {
     [DbContext(typeof(LMSContext))]
-    partial class LMSContextModelSnapshot : ModelSnapshot
+    [Migration("20240909131626_DeleteAuthorModule")]
+    partial class DeleteAuthorModule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,7 +25,7 @@ namespace LibraryManagementSystem.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("LibraryManagementSystem.Models.Book", b =>
+            modelBuilder.Entity("LibraryManagementSystem.Models.Books", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -65,7 +68,7 @@ namespace LibraryManagementSystem.Migrations
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<long?>("UserId")
+                    b.Property<long?>("UsersId")
                         .HasColumnType("bigint");
 
                     b.Property<long?>("borrowedByUserId")
@@ -73,7 +76,7 @@ namespace LibraryManagementSystem.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UsersId");
 
                     b.ToTable("Books");
                 });
@@ -109,24 +112,7 @@ namespace LibraryManagementSystem.Migrations
                     b.ToTable("BorrowingRecord");
                 });
 
-            modelBuilder.Entity("LibraryManagementSystem.Models.Permission", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("PermissionName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Permission");
-                });
-
-            modelBuilder.Entity("LibraryManagementSystem.Models.User", b =>
+            modelBuilder.Entity("LibraryManagementSystem.Models.Users", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -162,6 +148,9 @@ namespace LibraryManagementSystem.Migrations
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<long>("UserRolePermissionsId")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -172,65 +161,16 @@ namespace LibraryManagementSystem.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("LibraryManagementSystem.Models.UserPermissions", b =>
+            modelBuilder.Entity("LibraryManagementSystem.Models.Books", b =>
                 {
-                    b.Property<long>("UserPermissionsId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("UserPermissionsId"));
-
-                    b.Property<long>("PermissionId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("UserPermissionsId");
-
-                    b.HasIndex("PermissionId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserPermissions");
-                });
-
-            modelBuilder.Entity("LibraryManagementSystem.Models.Book", b =>
-                {
-                    b.HasOne("LibraryManagementSystem.Models.User", null)
+                    b.HasOne("LibraryManagementSystem.Models.Users", null)
                         .WithMany("Books")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UsersId");
                 });
 
-            modelBuilder.Entity("LibraryManagementSystem.Models.UserPermissions", b =>
-                {
-                    b.HasOne("LibraryManagementSystem.Models.Permission", "Permission")
-                        .WithMany("UserPermissions")
-                        .HasForeignKey("PermissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LibraryManagementSystem.Models.User", "User")
-                        .WithMany("UserPermissions")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Permission");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("LibraryManagementSystem.Models.Permission", b =>
-                {
-                    b.Navigation("UserPermissions");
-                });
-
-            modelBuilder.Entity("LibraryManagementSystem.Models.User", b =>
+            modelBuilder.Entity("LibraryManagementSystem.Models.Users", b =>
                 {
                     b.Navigation("Books");
-
-                    b.Navigation("UserPermissions");
                 });
 #pragma warning restore 612, 618
         }

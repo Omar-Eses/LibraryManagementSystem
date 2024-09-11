@@ -2,6 +2,7 @@
 using LibraryManagementSystem.Models;
 using LibraryManagementSystem.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using LibraryManagementSystem.Helpers;
 
 namespace LibraryManagementSystem.Controllers;
 [Authorize]
@@ -17,28 +18,31 @@ public class BooksController : ControllerBase
     }
 
     // GET: api/Books
+    [Authorize(Policy = PermissionTypes.CanGetBook)]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Books>>> GetBooks()
+    public async Task<ActionResult<IEnumerable<Book>>> GetBooks()
     {
         var authors = await _booksService.GetAllBooksAsync();
         return Ok(authors);
     }
 
     // GET: api/Books/5
+    [Authorize(Policy = PermissionTypes.CanGetBook)]
     [HttpGet("{id}")]
-    public async Task<ActionResult<Books>> GetBooks(long id)
+    public async Task<ActionResult<Book>> GetBooks(long id)
     {
         var books = await _booksService.GetBookByIdAsync(id);
-        if (books == null) {
+        if (books == null)
+        {
             return NotFound();
         }
         return Ok(books);
     }
 
     // PUT: api/Books/5
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+    [Authorize(Policy = PermissionTypes.CanEditBook)]
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutBook(long id, Books book)
+    public async Task<IActionResult> PutBook(long id, Book book)
     {
         if (!await _booksService.UpdateBookAsync(id, book))
         {
@@ -48,15 +52,16 @@ public class BooksController : ControllerBase
     }
 
     // POST: api/Books
-    
+    [Authorize(Policy = PermissionTypes.CanAddBook)]
     [HttpPost]
-    public async Task<ActionResult<Books>> PostBook(Books book)
+    public async Task<ActionResult<Book>> PostBook(Book book)
     {
         var newBook = await _booksService.AddBookAsync(book);
-        return CreatedAtAction("GetBooks", new { id = newBook.Id }, newBook);
+        return CreatedAtAction(nameof(GetBooks), new { id = newBook.Id }, newBook);
     }
 
     // DELETE: api/Books/5
+    [Authorize(Policy = PermissionTypes.CanDeleteBook)]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteBooks(long id)
     {
@@ -69,7 +74,7 @@ public class BooksController : ControllerBase
 
     private IActionResult BooksExists(long id)
     {
-        if (_booksService.BookExists(id)) 
+        if (_booksService.BookExists(id))
             return Ok($"Book with id {id} exists");
         return NotFound();
     }

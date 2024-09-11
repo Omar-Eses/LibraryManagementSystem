@@ -12,7 +12,7 @@ public class BooksServices : IBooksService
     {
         _context = context;
     }
-    public async Task<Books> AddBookAsync(Books book)
+    public async Task<Book> AddBookAsync(Book book)
     {
         _context.Books.Add(book);
         await _context.SaveChangesAsync();
@@ -34,17 +34,17 @@ public class BooksServices : IBooksService
         return true;
     }
 
-    public async Task<IEnumerable<Books>> GetAllBooksAsync()
+    public async Task<IEnumerable<Book>> GetAllBooksAsync()
     {
         return await _context.Books.ToListAsync();
     }
 
-    public async Task<Books?> GetBookByIdAsync(long id)
+    public async Task<Book?> GetBookByIdAsync(long id)
     {
         return await _context.Books.FindAsync(id);
     }
 
-    public async Task<bool> UpdateBookAsync(long id, Books book)
+    public async Task<bool> UpdateBookAsync(long id, Book book)
     {
         if (id != book.Id)
             return await Task.FromResult(false);
@@ -59,7 +59,6 @@ public class BooksServices : IBooksService
             oldBook.BookGenre = book.BookGenre;
             oldBook.BookPublisher = book.BookPublisher;
             oldBook.BookPublishedDate = book.BookPublishedDate;
-            oldBook.AuthorId = book.AuthorId;
             oldBook.BorrowedStatus = book.BorrowedStatus;
             oldBook.UpdatedAt = DateTimeOffset.Now;
             _context.Books.Update(oldBook);

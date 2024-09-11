@@ -4,7 +4,6 @@ using LibraryManagementSystem.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 
 namespace LibraryManagementSystem.Controllers;
-[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class UsersController : ControllerBase
@@ -18,23 +17,23 @@ public class UsersController : ControllerBase
 
     // GET: api/Users
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Users>>> GetUsers()
+    public async Task<ActionResult<IEnumerable<User>>> GetUsers()
     {
         return Ok(await _usersService.GetAllUsersAsync());
     }
 
     // GET: api/Users/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<Users>> GetUsers(long id) =>
+    public async Task<ActionResult<User>> GetUsers(long id) =>
         await _usersService.GetUserByIdAsync(id) != null ? Ok() : NotFound();
    
 
     // PUT: api/Users/5
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutUsers(long id, Users users)
+    public async Task<IActionResult> PutUsers(long id, User users)
     {
-        if (!await _usersService.UpdateUserAsync(id, users))
+        if (!await _usersService.UpdateUserAsync(id, users, [1, 2, 3]))
         {
             return BadRequest();
         }
@@ -46,9 +45,9 @@ public class UsersController : ControllerBase
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPost]
     [AllowAnonymous]
-    public async Task<ActionResult<Users>> PostUsers(Users users)
+    public async Task<ActionResult<User>> PostUsers(User users)
     {
-        var newUser = await _usersService.AddUserAsync(users);
+        var newUser = await _usersService.AddUserAsync(users, [1, 2, 3]);
         return CreatedAtAction("GetUsers", new { id = newUser.Id }, newUser);
     }
 
@@ -63,9 +62,9 @@ public class UsersController : ControllerBase
         return NoContent();
     }
 
-    private IActionResult UsersExists(long id)
+    private async Task<IActionResult> UsersExists(long id)
     {
-        if (_usersService.UserExists(id))
+        if (await _usersService.UserExistsAsync(id))
             return Ok($"Author {id} exists");
         return NotFound();
     }

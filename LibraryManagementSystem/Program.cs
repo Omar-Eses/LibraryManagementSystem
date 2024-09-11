@@ -5,6 +5,8 @@ using LibraryManagementSystem.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using LibraryManagementSystem.Helpers;
+using LibraryManagementSystem.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,7 +15,44 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "Library Management System API",
+        Version = "v1"
+    });
+
+    // Add JWT bearer token configuration
+    var securityScheme = new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Enter JWT Bearer token in the format: Bearer {your token here}",
+    };
+
+    var securityRequirement = new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "bearer"
+                }
+            },
+            new string[] {}
+        }
+    };
+
+    options.AddSecurityDefinition("bearer", securityScheme);
+    options.AddSecurityRequirement(securityRequirement);
+});
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -33,19 +72,34 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]))
     };
 });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(PermissionTypes.CanBorrow, policy => policy.RequireClaim("permission", PermissionTypes.CanBorrow));
+    options.AddPolicy(PermissionTypes.CanReturn, policy => policy.RequireClaim("permission", PermissionTypes.CanReturn));
+    options.AddPolicy(PermissionTypes.CanAddBook, policy => policy.RequireClaim("permission", PermissionTypes.CanAddBook));
+    options.AddPolicy(PermissionTypes.CanDeleteBook, policy => policy.RequireClaim("permission", PermissionTypes.CanDeleteBook));
+    options.AddPolicy(PermissionTypes.CanEditBook, policy => policy.RequireClaim("permission", PermissionTypes.CanEditBook));
+    options.AddPolicy(PermissionTypes.CanGetBook, policy => policy.RequireClaim("permission", PermissionTypes.CanGetBook));
+});
+
 builder.Services.AddScoped<IBorrowingService, BorrowingService>();
-builder.Services.AddScoped<IAuthorsService, AuthorsService>();
 builder.Services.AddScoped<IBooksService, BooksServices>();
 builder.Services.AddScoped<IUsersService, UsersServices>();
-builder.Services.AddDbContext<LMSContext> (opt => 
+
+builder.Services.AddDbContext<LMSContext>(opt =>
     opt.UseNpgsql(
-        builder.Configuration.GetConnectionString("LibraryManagementSystemContext") 
+        builder.Configuration.GetConnectionString("LibraryManagementSystemContext")
         ?? throw new InvalidOperationException("Connection string 'LibraryManagementSystemContext' not found.")
     )
 );
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<LMSContext>();
+    InsertPermissionsIfNotExists(context); // Call the method to insert permissions
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -62,3 +116,19 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+void InsertPermissionsIfNotExists(LMSContext context)
+{
+    if (!context.Set<Permission>().Any())
+    {
+        context.Set<Permission>().AddRange(
+            new Permission { Id = 1, PermissionName = PermissionTypes.CanBorrow },
+            new Permission { Id = 2, PermissionName = PermissionTypes.CanReturn },
+            new Permission { Id = 3, PermissionName = PermissionTypes.CanAddBook },
+            new Permission { Id = 4, PermissionName = PermissionTypes.CanGetBook },
+            new Permission { Id = 5, PermissionName = PermissionTypes.CanDeleteBook },
+            new Permission { Id = 6, PermissionName = PermissionTypes.CanEditBook }
+        );
+        context.SaveChanges();
+    }
+}

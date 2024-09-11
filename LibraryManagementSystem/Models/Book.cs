@@ -4,7 +4,7 @@ using static LibraryManagementSystem.Helpers.Enums;
 namespace LibraryManagementSystem.Models;
 
 
-public class Books
+public class Book
 {
     public long Id { get; set; }
     [Required]

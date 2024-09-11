@@ -4,10 +4,14 @@ namespace LibraryManagementSystem.Interfaces;
 
 public interface IUsersService
 {
-    Task<IEnumerable<Users>> GetAllUsersAsync();
-    Task<Users?> GetUserByIdAsync(long id);
-    Task<Users> AddUserAsync(Users user);
-    Task<bool> UpdateUserAsync(long id, Users user);
+    Task<IEnumerable<User>> GetAllUsersAsync();
+    Task<User?> GetUserByIdAsync(long id);
+    Task<User?> GetUserByEmailAsync(string email);
+    
+    Task<User> AddUserAsync(User user, List<long>? permissionIds);
+    Task<bool> UpdateUserAsync(long id, User user, List<long>? permissionIds);
     Task<bool> DeleteUserAsync(long id);
-    bool UserExists(long id);
+    Task<bool> UserExistsAsync(long id);
+    Task<bool> EmailExistsAsync(string email);
+    Task<List<Permission>> GetUserPermissionsAsync(long userId);
 }
