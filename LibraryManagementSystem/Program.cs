@@ -85,6 +85,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IBorrowingService, BorrowingService>();
 builder.Services.AddScoped<IBooksService, BooksServices>();
 builder.Services.AddScoped<IUsersService, UsersServices>();
+builder.Services.AddScoped<IPermissionsServices, PermissionsServices>();
 
 builder.Services.AddDbContext<LMSContext>(opt =>
     opt.UseNpgsql(

@@ -8,21 +8,14 @@ namespace LibraryManagementSystem.Controllers;
 [Authorize]
 [Route("api/[controller]")]
 [ApiController]
-public class BooksController : ControllerBase
+public class BooksController(IBooksService booksService) : ControllerBase
 {
-    private readonly IBooksService _booksService;
-
-    public BooksController(IBooksService booksService)
-    {
-        _booksService = booksService;
-    }
-
     // GET: api/Books
     [Authorize(Policy = PermissionTypes.CanGetBook)]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Book>>> GetBooks()
     {
-        var authors = await _booksService.GetAllBooksAsync();
+        var authors = await booksService.GetAllBooksAsync();
         return Ok(authors);
     }
 
@@ -31,7 +24,7 @@ public class BooksController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<Book>> GetBooks(long id)
     {
-        var books = await _booksService.GetBookByIdAsync(id);
+        var books = await booksService.GetBookByIdAsync(id);
         if (books == null)
         {
             return NotFound();
@@ -44,7 +37,7 @@ public class BooksController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> PutBook(long id, Book book)
     {
-        if (!await _booksService.UpdateBookAsync(id, book))
+        if (!await booksService.UpdateBookAsync(id, book))
         {
             return BadRequest();
         }
@@ -56,7 +49,7 @@ public class BooksController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Book>> PostBook(Book book)
     {
-        var newBook = await _booksService.AddBookAsync(book);
+        var newBook = await booksService.AddBookAsync(book);
         return CreatedAtAction(nameof(GetBooks), new { id = newBook.Id }, newBook);
     }
 
@@ -65,7 +58,7 @@ public class BooksController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteBooks(long id)
     {
-        if (!await _booksService.DeleteBookAsync(id))
+        if (!await booksService.DeleteBookAsync(id))
         {
             return NotFound();
         }
@@ -74,7 +67,7 @@ public class BooksController : ControllerBase
 
     private IActionResult BooksExists(long id)
     {
-        if (_booksService.BookExists(id))
+        if (booksService.BookExists(id))
             return Ok($"Book with id {id} exists");
         return NotFound();
     }

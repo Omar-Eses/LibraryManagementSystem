@@ -39,7 +39,7 @@ public class BorrowingService : IBorrowingService
         var borrowingRecord = await GetRecordByBookIdAsync(bookId);
         if (borrowingRecord == null || borrowingRecord.ReturnedDate != null)
         {
-            var newRecord = new BorrowingRecord
+            BorrowingRecord newRecord = new()
             {
                 BookId = bookId,
                 UserId = userId,
@@ -52,6 +52,7 @@ public class BorrowingService : IBorrowingService
             await _context.SaveChangesAsync();
             return true;
         }
+
         return false;
     }
 
@@ -67,8 +68,10 @@ public class BorrowingService : IBorrowingService
             return true;
         }
         // user already returned: specific error
-
+        //TODO : Throw
         // book not borrowed by user: specific error
+        //TODO : Throw
+
         return false;
     }
 
