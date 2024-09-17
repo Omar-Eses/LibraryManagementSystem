@@ -6,7 +6,7 @@ namespace LibraryManagementSystem.Models;
 
 public class Book
 {
-    public long Id { get; set; }
+    public long Id { get; init; }
     [Required]
     public string BookTitle { get; set; }
     [Required]

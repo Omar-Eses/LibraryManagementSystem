@@ -8,5 +8,4 @@ public static class PermissionTypes
     public const string CanGetBook = "CanGetBook";
     public const string CanEditBook = "CanEditBook";
     public const string CanDeleteBook = "CanDeleteBook";
-    
 }

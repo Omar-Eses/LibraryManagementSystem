@@ -2,11 +2,11 @@
 
 public class BorrowingRecord
 {
-    public long Id { get; set; }
+    public long Id { get; init; }
     public long BookId { get; set; }
     public long UserId { get; set; }
-    public DateOnly BorrowedDate { get; set; }
-    public DateOnly? ReturnedDate { get; set; }
-    public DateOnly DueDate { get; set; } // DateTimeoffset
-    public decimal Fine { get; internal set; } = 0;
+    public DateTimeOffset BorrowedDate { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? ReturnedDate { get; set; }
+    public DateTimeOffset DueDate { get; set; }
+    public double Fine { get; internal set; } = 0;
 }

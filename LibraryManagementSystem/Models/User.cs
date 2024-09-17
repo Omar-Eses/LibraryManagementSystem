@@ -1,12 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
-
+//front validation
 namespace LibraryManagementSystem.Models;
 public class User
 {
-    public long Id { get; set; }
-
+    public long Id { get; init; }
     [Required]
-    [StringLength(100)]
     public string Username { get; set; }
     [Required]
     [EmailAddress]

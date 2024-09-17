@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using LibraryManagementSystem.Models;
-using LibraryManagementSystem.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using LibraryManagementSystem.Helpers;
+using LibraryManagementSystem.Services;
+using LibraryManagementSystem.Services.Queries;
+using LibraryManagementSystem.Services.Commands.BookCommandsHandlers;
 
 namespace LibraryManagementSystem.Controllers;
 [Authorize]
@@ -10,11 +12,19 @@ namespace LibraryManagementSystem.Controllers;
 [ApiController]
 public class BooksController : ControllerBase
 {
-    private readonly IBooksService _booksService;
 
-    public BooksController(IBooksService booksService)
+    private readonly IDispatcher _dispatcher;
+
+    public BooksController(IDispatcher dipatcher) => _dispatcher = dipatcher;
+
+
+    // POST: api/Books
+    [Authorize(Policy = PermissionTypes.CanAddBook)]
+    [HttpPost]
+    public async Task<ActionResult<Book>> PostBook(CreateBookCommand command)
     {
-        _booksService = booksService;
+        await _dispatcher.Dispatch<CreateBookCommand, Book>(command);
+        return Ok();
     }
 
     // GET: api/Books
@@ -22,60 +32,52 @@ public class BooksController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Book>>> GetBooks()
     {
-        var authors = await _booksService.GetAllBooksAsync();
-        return Ok(authors);
+        var query = new GetAllBooksQuery();
+        var books = await _dispatcher.Dispatch<GetAllBooksQuery, IEnumerable<Book>>(query);
+        return Ok(books);
     }
 
     // GET: api/Books/5
     [Authorize(Policy = PermissionTypes.CanGetBook)]
     [HttpGet("{id}")]
-    public async Task<ActionResult<Book>> GetBooks(long id)
+    public async Task<ActionResult<Book>> GetBook(long id)
     {
-        var books = await _booksService.GetBookByIdAsync(id);
-        if (books == null)
-        {
-            return NotFound();
-        }
-        return Ok(books);
+        var query = new GetBookQueryById { Id = id };
+        var book = await _dispatcher.Dispatch<GetBookQueryById, Book>(query);
+
+        if (book == null) return NotFound();
+        return Ok(book);
     }
 
     // PUT: api/Books/5
     [Authorize(Policy = PermissionTypes.CanEditBook)]
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutBook(long id, Book book)
+    public async Task<IActionResult> PutBook(long id, UpdateBookCommand command)
     {
-        if (!await _booksService.UpdateBookAsync(id, book))
-        {
-            return BadRequest();
-        }
+        if (id != command.Id) return BadRequest();
+
+        await _dispatcher.Dispatch<UpdateBookCommand, Book>(command);
         return NoContent();
     }
 
-    // POST: api/Books
-    [Authorize(Policy = PermissionTypes.CanAddBook)]
-    [HttpPost]
-    public async Task<ActionResult<Book>> PostBook(Book book)
-    {
-        var newBook = await _booksService.AddBookAsync(book);
-        return CreatedAtAction(nameof(GetBooks), new { id = newBook.Id }, newBook);
-    }
+
 
     // DELETE: api/Books/5
     [Authorize(Policy = PermissionTypes.CanDeleteBook)]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteBooks(long id)
     {
-        if (!await _booksService.DeleteBookAsync(id))
-        {
-            return NotFound();
-        }
+        var command = new DeleteBookCommand { BookId = id };
+        await _dispatcher.Dispatch<DeleteBookCommand, Book>(command);
+
         return NoContent();
     }
 
-    private IActionResult BooksExists(long id)
+    private async Task<IActionResult> BooksExists(long id)
     {
-        if (_booksService.BookExists(id))
-            return Ok($"Book with id {id} exists");
-        return NotFound();
+        var book = await _dispatcher.Dispatch<GetBookQueryById, Book>(new GetBookQueryById { Id = id });
+        if (book == null) return NotFound();
+
+        return Ok(book);
     }
 }

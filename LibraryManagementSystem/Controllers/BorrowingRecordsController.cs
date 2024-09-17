@@ -2,6 +2,8 @@
 using LibraryManagementSystem.Models;
 using LibraryManagementSystem.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using LibraryManagementSystem.Services;
+using LibraryManagementSystem.Services.Commands.BorrowingCommandsHandlers;
 
 namespace LibraryManagementSystem.Controllers;
 [Authorize]
@@ -9,32 +11,27 @@ namespace LibraryManagementSystem.Controllers;
 [ApiController]
 public class BorrowingRecordsController : ControllerBase
 {
-    private readonly IBorrowingService _borrowingService;
+    private readonly IDispatcher _dispatcher;
 
-    public BorrowingRecordsController(IBorrowingService borrowingService)
-    {
-        _borrowingService = borrowingService;
-    }
+    public BorrowingRecordsController(IDispatcher dispatcher) => _dispatcher = dispatcher;
 
-    // POST: api/BorrowingRecords/borrow/
+    // Inside the BorrowingRecordsController class  
     [HttpPost("borrow/{bookId}")]
-    public async Task<IActionResult> BorrowBook(long bookId, [FromBody] BorrowingRecord request)
+    public async Task<IActionResult> BorrowBook(long bookId, [FromBody] long userId)
     {
-        var result = await _borrowingService.BorrowBookAsync(request.UserId, bookId);
-        if (result)
-            return Ok($"Book borrowed by {request.UserId}");
-        return BadRequest($"Borrow book operation failed.");
+        var request = new CreateBorrowingCommand { BookId = bookId, UserId = userId };
+        await _dispatcher.Dispatch<CreateBorrowingCommand, BorrowingRecord>(request);
+        return NoContent();
     }
 
-    // POST: api/BorrowingRecords/return/
+    // POST: api/BorrowingRecords/return/ 
     [HttpPost("return/{bookId}")]
     public async Task<IActionResult> ReturnBook(long bookId, [FromBody] long userId)
     {
-        var result = await _borrowingService.ReturnBookAsync(userId, bookId);
-        if (result)
-            return Ok($"Book returned by {userId}");
-        return BadRequest($"Return book operation failed.");
+        if (bookId == 0 || userId == 0) return BadRequest("Book ID or User ID is missing.");
+
+        var request = new UpdateBorrowingCommand { BookId = bookId, UserId = userId };
+        await _dispatcher.Dispatch<UpdateBorrowingCommand, BorrowingRecord>(request);
+        return NoContent();
     }
-
-
 }

@@ -7,6 +7,10 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using LibraryManagementSystem.Helpers;
 using LibraryManagementSystem.Models;
+using LibraryManagementSystem.Services.Commands.UserCommandsHandlers;
+using LibraryManagementSystem.Services.Queries;
+using LibraryManagementSystem.Services.Commands.BookCommandsHandlers;
+using LibraryManagementSystem.Services.Commands.BorrowingCommandsHandlers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,7 +49,7 @@ builder.Services.AddSwaggerGen(options =>
                     Id = "bearer"
                 }
             },
-            new string[] {}
+            new string[] { }
         }
     };
 
@@ -54,37 +58,53 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateIssuerSigningKey = true,
-        ValidateLifetime = true,
-        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-        ValidAudience = builder.Configuration["JwtSettings:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]))
-    };
-});
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy(PermissionTypes.CanBorrow, policy => policy.RequireClaim("permission", PermissionTypes.CanBorrow));
-    options.AddPolicy(PermissionTypes.CanReturn, policy => policy.RequireClaim("permission", PermissionTypes.CanReturn));
-    options.AddPolicy(PermissionTypes.CanAddBook, policy => policy.RequireClaim("permission", PermissionTypes.CanAddBook));
-    options.AddPolicy(PermissionTypes.CanDeleteBook, policy => policy.RequireClaim("permission", PermissionTypes.CanDeleteBook));
-    options.AddPolicy(PermissionTypes.CanEditBook, policy => policy.RequireClaim("permission", PermissionTypes.CanEditBook));
-    options.AddPolicy(PermissionTypes.CanGetBook, policy => policy.RequireClaim("permission", PermissionTypes.CanGetBook));
-});
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidateLifetime = true,
+            ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+            ValidAudience = builder.Configuration["JwtSettings:Audience"],
+            IssuerSigningKey =
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]))
+        };
+    });
 
-builder.Services.AddScoped<IBorrowingService, BorrowingService>();
-builder.Services.AddScoped<IBooksService, BooksServices>();
-builder.Services.AddScoped<IUsersService, UsersServices>();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(PermissionTypes.CanBorrow, policy => policy.RequireClaim("permission", PermissionTypes.CanBorrow))
+    .AddPolicy(PermissionTypes.CanReturn, policy => policy.RequireClaim("permission", PermissionTypes.CanReturn))
+    .AddPolicy(PermissionTypes.CanAddBook, policy => policy.RequireClaim("permission", PermissionTypes.CanAddBook))
+    .AddPolicy(PermissionTypes.CanDeleteBook,
+        policy => policy.RequireClaim("permission", PermissionTypes.CanDeleteBook))
+    .AddPolicy(PermissionTypes.CanEditBook, policy => policy.RequireClaim("permission", PermissionTypes.CanEditBook))
+    .AddPolicy(PermissionTypes.CanGetBook, policy => policy.RequireClaim("permission", PermissionTypes.CanGetBook));
+
+builder.Services.AddScoped<IDispatcher, Dispatcher>();
+builder.Services.AddScoped<IRequestHandler<CreateUserCommand, User>, CreateUserCommandHandler>();
+builder.Services.AddScoped<IRequestHandler<GetAllUsersQuery, IEnumerable<User>>, GetAllUsersQueryHandler>();
+builder.Services.AddScoped<IRequestHandler<GetUserByIdQuery, User>, GetUserQueryHandler>();
+builder.Services.AddScoped<IRequestHandler<UpdateUserCommand, User>, UpdateUserCommandHandler>();
+builder.Services.AddScoped<IRequestHandler<DeleteUserCommand, User>, DeleteUserCommandHandler>();
+builder.Services.AddScoped<IRequestHandler<CreateBookCommand, Book>, CreateBookCommandHandler>();
+builder.Services.AddScoped<IRequestHandler<GetAllBooksQuery, IEnumerable<Book>>, GetAllBooksQueryHandler>();
+builder.Services.AddScoped<IRequestHandler<GetBookQueryById, Book>, GetBookQueryHandler>();
+builder.Services.AddScoped<IRequestHandler<UpdateBookCommand, Book>, UpdateBookCommandHandler>();
+builder.Services
+    .AddScoped<IRequestHandler<CreateBorrowingCommand, BorrowingRecord>, CreateBorrowingCommandHandler>();
+builder.Services
+    .AddScoped<IRequestHandler<UpdateBorrowingCommand, BorrowingRecord>, UpdateBorrowingCommandHandler>();
+
+// builder.Services.AddScoped<IBorrowingService, BorrowingService>();
+// builder.Services.AddScoped<IBooksService, BooksServices>();
+// builder.Services.AddScoped<IUsersService, UsersServices>();
 
 builder.Services.AddDbContext<LMSContext>(opt =>
     opt.UseNpgsql(
