@@ -1,35 +1,34 @@
 ﻿using LibraryManagementSystem.Data;
 using LibraryManagementSystem.Interfaces;
+using LibraryManagementSystem.Migrations;
 using LibraryManagementSystem.Models;
+using UserPermissions = LibraryManagementSystem.Models.UserPermissions;
 
 namespace LibraryManagementSystem.Services.Commands.UserCommandsHandlers;
 
 public class UpdateUserCommand : IRequest<User>
 {
-    public long Id { get; }
+    public long Id { get; set; }
     public string HashedPassword { get; set; }
     public int NumberOfBooksAllowed { get; set; }
-    public List<Book> books { get; set; }
     public decimal? TotalFine { get; set; }
-    public DateTimeOffset? UpdatedAt { get; set; }
+    public DateTimeOffset? UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
     public List<long> UserPermissionsList { get; set; }
 }
+
 public class UpdateUserCommandHandler(LMSContext context) : IRequestHandler<UpdateUserCommand, User>
 {
     public async Task<User> Handle(UpdateUserCommand request)
     {
-        var user = new User
-        {
-            HashedPassword = request.HashedPassword,
-            NumberOfBooksAllowed = request.NumberOfBooksAllowed,
-            Books = request.books,
-            TotalFine = request.TotalFine,
-            UpdatedAt = DateTimeOffset.UtcNow,
-        };
-        context.Users.Update(user);
-        await context.SaveChangesAsync();
+        var user = await context.Users.FindAsync(request.Id);
+        if (user == null) throw new Exception("User not found");
 
-        await UpdatePermissionsToUser(user.Id, request.UserPermissionsList);
+        user.HashedPassword = request.HashedPassword;
+        user.NumberOfBooksAllowed = request.NumberOfBooksAllowed;
+        user.TotalFine = request.TotalFine;
+        user.UpdatedAt = request.UpdatedAt ?? DateTimeOffset.UtcNow;
+        await UpdatePermissionsToUser(request.Id, request.UserPermissionsList);
+        await context.SaveChangesAsync();
 
         return user;
     }
@@ -46,6 +45,7 @@ public class UpdateUserCommandHandler(LMSContext context) : IRequestHandler<Upda
                 PermissionId = permissionId
             });
         }
+
         await context.SaveChangesAsync();
         return await Task.FromResult(true);
     }

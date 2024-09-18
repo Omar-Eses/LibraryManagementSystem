@@ -10,14 +10,6 @@ namespace LibraryManagementSystem.Controllers
     [Route("api/[controller]")]
     public class UsersController(IDispatcher dispatcher) : ControllerBase
     {
-        // POST: api/Users
-        [HttpPost]
-        public async Task<IActionResult> CreateUser(CreateUserCommand command)
-        {
-            var user = await dispatcher.Dispatch<CreateUserCommand, User>(command);
-            return Ok(user);
-        }
-
         // GET: api/Users
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()

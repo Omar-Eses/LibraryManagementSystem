@@ -1,6 +1,6 @@
 ﻿namespace LibraryManagementSystem.Helpers;
 
-public class Enums
+public abstract class Enums
 {
     public enum BorrowedStatus
     {
