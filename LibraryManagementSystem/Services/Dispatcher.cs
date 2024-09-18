@@ -5,7 +5,7 @@ namespace LibraryManagementSystem.Services;
 public interface IDispatcher
 {
     Task<TResponse> Dispatch<TRequest, TResponse>(TRequest request)
-        where TRequest : IRequest<TResponse>;
+        where TRequest : IRequest<TResponse>?;
 }
 
 public class Dispatcher(IServiceProvider serviceProvider) : IDispatcher

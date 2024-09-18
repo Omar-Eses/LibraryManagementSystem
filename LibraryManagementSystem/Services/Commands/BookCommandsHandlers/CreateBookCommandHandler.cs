@@ -14,7 +14,6 @@ public class CreateBookCommand : IRequest<Book>
     public string BookPublisher { get; set; }
     public DateOnly BookPublishedDate { get; set; }
     public long AuthorId { get; set; }
-    public BorrowedStatus BorrowedStatus { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
 
@@ -31,8 +30,7 @@ public class CreateBookCommandHandler(LMSContext context) : IRequestHandler<Crea
             BookPublisher = request.BookPublisher,
             BookPublishedDate = request.BookPublishedDate,
             AuthorId = request.AuthorId,
-            BorrowedStatus = request.BorrowedStatus,
-            CreatedAt = request.CreatedAt,
+            CreatedAt = request.CreatedAt.ToUniversalTime()
         };
         context.Books.Add(book);
         await context.SaveChangesAsync();

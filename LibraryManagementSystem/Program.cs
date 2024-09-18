@@ -101,7 +101,11 @@ builder.Services
     .AddScoped<IRequestHandler<CreateBorrowingCommand, BorrowingRecord>, CreateBorrowingCommandHandler>();
 builder.Services
     .AddScoped<IRequestHandler<UpdateBorrowingCommand, BorrowingRecord>, UpdateBorrowingCommandHandler>();
-
+builder.Services
+    .AddScoped<IRequestHandler<GetUserPermissionsQuery, List<Permission>>, GetUserPermissionsQueryHandler>();
+builder.Services.AddScoped<IRequestHandler<GetUserByEmailQuery, bool>, GetUserByEmailQueryHandler>();
+builder.Services.AddScoped<IRequestHandler<ValidateUserCredentialsQuery, User>, ValidateUserCredentialsQueryHandler>();
+builder.Services.AddScoped<IRequestHandler<DeleteBookCommand, Book>, DeleteBookCommandHandler>();
 // builder.Services.AddScoped<IBorrowingService, BorrowingService>();
 // builder.Services.AddScoped<IBooksService, BooksServices>();
 // builder.Services.AddScoped<IUsersService, UsersServices>();
@@ -136,19 +140,18 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+return;
 
 void InsertPermissionsIfNotExists(LMSContext context)
 {
-    if (!context.Set<Permission>().Any())
-    {
-        context.Set<Permission>().AddRange(
-            new Permission { Id = 1, PermissionName = PermissionTypes.CanBorrow },
-            new Permission { Id = 2, PermissionName = PermissionTypes.CanReturn },
-            new Permission { Id = 3, PermissionName = PermissionTypes.CanAddBook },
-            new Permission { Id = 4, PermissionName = PermissionTypes.CanGetBook },
-            new Permission { Id = 5, PermissionName = PermissionTypes.CanDeleteBook },
-            new Permission { Id = 6, PermissionName = PermissionTypes.CanEditBook }
-        );
-        context.SaveChanges();
-    }
+    if (context.Set<Permission>().Any()) return;
+    context.Set<Permission>().AddRange(
+        new Permission { Id = 1, PermissionName = PermissionTypes.CanBorrow },
+        new Permission { Id = 2, PermissionName = PermissionTypes.CanReturn },
+        new Permission { Id = 3, PermissionName = PermissionTypes.CanAddBook },
+        new Permission { Id = 4, PermissionName = PermissionTypes.CanGetBook },
+        new Permission { Id = 5, PermissionName = PermissionTypes.CanDeleteBook },
+        new Permission { Id = 6, PermissionName = PermissionTypes.CanEditBook }
+    );
+    context.SaveChanges();
 }

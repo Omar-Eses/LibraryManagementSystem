@@ -5,12 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagementSystem.Services.Queries;
 
-public class GetAllBooksQuery : IRequest<IEnumerable<Book>> { }
-public class GetAllBooksQueryHandler : IRequestHandler<GetAllBooksQuery, IEnumerable<Book>>
+public class GetAllBooksQuery : IRequest<IEnumerable<Book>>
 {
-    private readonly LMSContext _context;
+}
 
-    public GetAllBooksQueryHandler(LMSContext context) => _context = context;
-
-    public async Task<IEnumerable<Book>> Handle(GetAllBooksQuery query) => await _context.Books.ToListAsync();
+public class GetAllBooksQueryHandler(LMSContext context) : IRequestHandler<GetAllBooksQuery, IEnumerable<Book>>
+{
+    public async Task<IEnumerable<Book>> Handle(GetAllBooksQuery query) => await context.Books.ToListAsync();
 }

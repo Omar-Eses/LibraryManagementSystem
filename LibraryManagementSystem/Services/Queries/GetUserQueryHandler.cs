@@ -16,5 +16,6 @@ public class GetUserQueryHandler : IRequestHandler<GetUserByIdQuery, User>
     public GetUserQueryHandler(LMSContext context) => _context = context;
 
     public async Task<User> Handle(GetUserByIdQuery request) =>
-        await _context.Users.FindAsync(request.Id) ?? throw new Exception("User not found");
+        await _context.Users.FindAsync(request.Id)
+        ?? throw new Exception("User not found");
 }

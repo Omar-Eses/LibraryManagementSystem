@@ -1,4 +1,5 @@
-﻿using LibraryManagementSystem.Data;
+﻿using System.Runtime.Serialization;
+using LibraryManagementSystem.Data;
 using LibraryManagementSystem.Interfaces;
 using LibraryManagementSystem.Models;
 using static LibraryManagementSystem.Helpers.Enums;
@@ -7,7 +8,7 @@ namespace LibraryManagementSystem.Services.Commands.BookCommandsHandlers;
 
 public class UpdateBookCommand : IRequest<Book>
 {
-    public long Id { get; }
+    public long Id { get;set; }
     public string BookTitle { get; set; }
     public string BookDescription { get; set; }
     public string ISBN { get; set; }
@@ -18,17 +19,11 @@ public class UpdateBookCommand : IRequest<Book>
     public BorrowedStatus BorrowedStatus { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
-public class UpdateBookCommandHandler : IRequestHandler<UpdateBookCommand, Book>
+public class UpdateBookCommandHandler(LMSContext context) : IRequestHandler<UpdateBookCommand, Book>
 {
-    private readonly LMSContext _context;
-    public UpdateBookCommandHandler(LMSContext context)
-    {
-        _context = context;
-    }
-
     public async Task<Book> Handle(UpdateBookCommand request)
     {
-        var book = await _context.Books.FindAsync(request.Id);
+        var book = await context.Books.FindAsync(request.Id);
         if (book == null) throw new Exception("Book not found");
 
         book.BookTitle = request.BookTitle;
@@ -41,7 +36,7 @@ public class UpdateBookCommandHandler : IRequestHandler<UpdateBookCommand, Book>
         book.BorrowedStatus = request.BorrowedStatus;
         book.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
 
         return book;
     }
