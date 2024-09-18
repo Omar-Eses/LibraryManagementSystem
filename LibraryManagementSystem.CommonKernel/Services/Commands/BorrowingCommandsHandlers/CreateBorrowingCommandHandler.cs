@@ -23,6 +23,7 @@ public class CreateBorrowingCommandHandler(LMSContext context)
             var book = await context.Books.FindAsync(request.BookId);
             if (book == null) throw new Exception("Book not found");
 
+            //TODO : HttpContext
             var user = await context.Users.FindAsync(request.UserId);
             if (user == null) throw new Exception("User not found");
 

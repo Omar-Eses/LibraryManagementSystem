@@ -69,9 +69,15 @@ public class BooksController(IDispatcher dispatcher) : ControllerBase
     public async Task<IActionResult> DeleteBooks(long id)
     {
         
-        var book = await dispatcher.Dispatch<GetBookQueryById, Book>(new GetBookQueryById { Id = id });
+        var book = await dispatcher.Dispatch<GetBookQueryById, Book?>(new GetBookQueryById { Id = id });
         if (book == null)
             return NotFound($"Book with ID {id} not found.");
+
+        var test = await BookExists(id);
+        if(!test)
+            return NotFound($"Book with ID {id} not found.");
+
+
 
         // Dispatch the delete command
         var command = new DeleteBookCommand { BookId = id };
@@ -82,7 +88,7 @@ public class BooksController(IDispatcher dispatcher) : ControllerBase
 
     private async Task<bool> BookExists(long id)
     {
-        var book = await dispatcher.Dispatch<GetBookQueryById, Book>(new GetBookQueryById { Id = id });
+        var book = await dispatcher.Dispatch<GetBookQueryById, Book?>(new GetBookQueryById { Id = id });
         if (book == null) return false;
         
         return true;

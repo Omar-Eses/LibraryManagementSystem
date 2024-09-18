@@ -1,16 +1,10 @@
-using Microsoft.EntityFrameworkCore;
 using LibraryManagementSystem.Data;
-using LibraryManagementSystem.Services;
-using LibraryManagementSystem.Interfaces;
+using LibraryManagementSystem.Helpers;
+using LibraryManagementSystem.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using LibraryManagementSystem.Helpers;
-using LibraryManagementSystem.Models;
-using LibraryManagementSystem.Services.Commands.UserCommandsHandlers;
-using LibraryManagementSystem.Services.Queries;
-using LibraryManagementSystem.Services.Commands.BookCommandsHandlers;
-using LibraryManagementSystem.Services.Commands.BorrowingCommandsHandlers;
+using LibraryManagementSystem.CommonKernel;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -87,35 +81,7 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy(PermissionTypes.CanEditBook, policy => policy.RequireClaim("permission", PermissionTypes.CanEditBook))
     .AddPolicy(PermissionTypes.CanGetBook, policy => policy.RequireClaim("permission", PermissionTypes.CanGetBook));
 
-builder.Services.AddScoped<IDispatcher, Dispatcher>();
-builder.Services.AddScoped<IRequestHandler<CreateUserCommand, User>, CreateUserCommandHandler>();
-builder.Services.AddScoped<IRequestHandler<GetAllUsersQuery, IEnumerable<User>>, GetAllUsersQueryHandler>();
-builder.Services.AddScoped<IRequestHandler<GetUserByIdQuery, User>, GetUserQueryHandler>();
-builder.Services.AddScoped<IRequestHandler<UpdateUserCommand, User>, UpdateUserCommandHandler>();
-builder.Services.AddScoped<IRequestHandler<DeleteUserCommand, User>, DeleteUserCommandHandler>();
-builder.Services.AddScoped<IRequestHandler<CreateBookCommand, Book>, CreateBookCommandHandler>();
-builder.Services.AddScoped<IRequestHandler<GetAllBooksQuery, IEnumerable<Book>>, GetAllBooksQueryHandler>();
-builder.Services.AddScoped<IRequestHandler<GetBookQueryById, Book>, GetBookQueryHandler>();
-builder.Services.AddScoped<IRequestHandler<UpdateBookCommand, Book>, UpdateBookCommandHandler>();
-builder.Services
-    .AddScoped<IRequestHandler<CreateBorrowingCommand, BorrowingRecord>, CreateBorrowingCommandHandler>();
-builder.Services
-    .AddScoped<IRequestHandler<UpdateBorrowingCommand, BorrowingRecord>, UpdateBorrowingCommandHandler>();
-builder.Services
-    .AddScoped<IRequestHandler<GetUserPermissionsQuery, List<Permission>>, GetUserPermissionsQueryHandler>();
-builder.Services.AddScoped<IRequestHandler<GetUserByEmailQuery, bool>, GetUserByEmailQueryHandler>();
-builder.Services.AddScoped<IRequestHandler<ValidateUserCredentialsQuery, User>, ValidateUserCredentialsQueryHandler>();
-builder.Services.AddScoped<IRequestHandler<DeleteBookCommand, Book>, DeleteBookCommandHandler>();
-// builder.Services.AddScoped<IBorrowingService, BorrowingService>();
-// builder.Services.AddScoped<IBooksService, BooksServices>();
-// builder.Services.AddScoped<IUsersService, UsersServices>();
-
-builder.Services.AddDbContext<LMSContext>(opt =>
-    opt.UseNpgsql(
-        builder.Configuration.GetConnectionString("LibraryManagementSystemContext")
-        ?? throw new InvalidOperationException("Connection string 'LibraryManagementSystemContext' not found.")
-    )
-);
+builder.Services.AddLibraryManagementSystemModule();
 
 var app = builder.Build();
 

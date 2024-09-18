@@ -1,6 +1,5 @@
 ﻿using LibraryManagementSystem.Data;
 using LibraryManagementSystem.Interfaces;
-using LibraryManagementSystem.Migrations;
 using LibraryManagementSystem.Models;
 using UserPermissions = LibraryManagementSystem.Models.UserPermissions;
 

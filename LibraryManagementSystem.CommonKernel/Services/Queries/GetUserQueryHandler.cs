@@ -10,12 +10,9 @@ public class GetUserByIdQuery : IRequest<User>
     public long Id { get; set; }
 }
 
-public class GetUserQueryHandler : IRequestHandler<GetUserByIdQuery, User>
+public class GetUserQueryHandler(LMSContext context) : IRequestHandler<GetUserByIdQuery, User>
 {
-    private readonly LMSContext _context;
-    public GetUserQueryHandler(LMSContext context) => _context = context;
-
     public async Task<User> Handle(GetUserByIdQuery request) =>
-        await _context.Users.FindAsync(request.Id)
+        await context.Users.FindAsync(request.Id)
         ?? throw new Exception("User not found");
 }
