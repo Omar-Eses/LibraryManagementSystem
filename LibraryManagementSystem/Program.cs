@@ -81,7 +81,9 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy(PermissionTypes.CanEditBook, policy => policy.RequireClaim("permission", PermissionTypes.CanEditBook))
     .AddPolicy(PermissionTypes.CanGetBook, policy => policy.RequireClaim("permission", PermissionTypes.CanGetBook));
 
-builder.Services.AddLibraryManagementSystemModule();
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddLibraryManagementSystemModule(builder.Configuration);
 
 var app = builder.Build();
 
