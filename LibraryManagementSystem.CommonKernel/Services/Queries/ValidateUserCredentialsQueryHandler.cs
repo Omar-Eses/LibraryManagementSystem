@@ -1,4 +1,6 @@
+using LibraryManagementSystem.CommonKernel.Interfaces;
 using LibraryManagementSystem.Data;
+using LibraryManagementSystem.Helpers;
 using LibraryManagementSystem.Interfaces;
 using LibraryManagementSystem.Models;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +16,11 @@ public class ValidateUserCredentialsQuery : IRequest<User>
 public class ValidateUserCredentialsQueryHandler(LMSContext context)
     : IRequestHandler<ValidateUserCredentialsQuery, User>
 {
-    public async Task<User> Handle(ValidateUserCredentialsQuery request) => await context.Users
+    private readonly TimeSpan _cacheDuration = CommonVariables.CacheExpirationTime;
+    public async Task<User> Handle(ValidateUserCredentialsQuery request)
+    {
+
+        return await context.Users
         .FirstOrDefaultAsync(u => u.Email == request.Email && u.HashedPassword == request.Password) ?? throw new Exception("Invalid credentials");
+    }
 }

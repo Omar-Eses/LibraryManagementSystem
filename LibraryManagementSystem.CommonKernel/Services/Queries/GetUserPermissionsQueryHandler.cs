@@ -1,4 +1,6 @@
+using LibraryManagementSystem.CommonKernel.Interfaces;
 using LibraryManagementSystem.Data;
+using LibraryManagementSystem.Helpers;
 using LibraryManagementSystem.Interfaces;
 using LibraryManagementSystem.Models;
 using Microsoft.EntityFrameworkCore;
@@ -24,9 +26,8 @@ public class GetUserPermissionsQueryHandler(LMSContext context)
         var userPermissions = await context.UserPermissions
             .Where(up => up.UserId == request.userId)
             .Include(up => up.Permission) // Include permission details
-            //.AsNoTracking()
-            //.AsSplitQuery()
             .Select(up => up.Permission) // Extract permission information
+            .AsSplitQuery()
             .ToListAsync();
 
         return userPermissions;

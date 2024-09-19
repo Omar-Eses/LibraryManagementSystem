@@ -1,4 +1,6 @@
-﻿using LibraryManagementSystem.Data;
+﻿using LibraryManagementSystem.CommonKernel.Interfaces;
+using LibraryManagementSystem.Data;
+using LibraryManagementSystem.Helpers;
 using LibraryManagementSystem.Interfaces;
 using LibraryManagementSystem.Models;
 
@@ -8,21 +10,23 @@ public class GetBorrowingQueryById : IRequest<BorrowingRecord>
 {
     public long Id { get; set; }
 }
-public class GetBorrowingQueryHandler : IRequestHandler<GetBorrowingQueryById, BorrowingRecord>
+public class GetBorrowingQueryHandler(LMSContext context, IRedisCacheService cacheService) : IRequestHandler<GetBorrowingQueryById, BorrowingRecord>
 {
-    private readonly LMSContext _context;
-    public GetBorrowingQueryHandler(LMSContext context)
-    {
-        _context = context;
-    }
-
+    private readonly TimeSpan _cacheDuration = CommonVariables.CacheExpirationTime;
     public async Task<BorrowingRecord> Handle(GetBorrowingQueryById request)
     {
-        var borrowing = await _context.BorrowingRecord.FindAsync(request.Id);
-        if (borrowing == null)
-            throw new Exception("Borrowing not found");
+        // step 1 => get cached borrowed records if available
+        var cachedBorrowedRecord = await cacheService.GetCacheDataAsync<BorrowingRecord>($"BorrowingRecord_{request.Id}");
+        if (cachedBorrowedRecord != null) return cachedBorrowedRecord;
 
+        // step 2 => else get borrowed record from DB
+        var borrowedRecord = await context.BorrowingRecord.FindAsync(request.Id) ?? throw new Exception("Borrowing not found");
 
-        return borrowing;
+        // step 3 => set cache in parallel call cacheBorrowingRecordAsync
+        CacheBorrowingRecordAsync(borrowedRecord);
+        // step 4 => return borrowed record
+        return borrowedRecord;
     }
+    private void CacheBorrowingRecordAsync(BorrowingRecord borrowedRecord)
+        => Task.Run(() => cacheService.SetCacheDataAsync($"BorrowingRecord_{borrowedRecord.Id}", borrowedRecord, _cacheDuration);
 }
