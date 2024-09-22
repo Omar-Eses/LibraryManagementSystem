@@ -22,13 +22,13 @@ public class AuthenticationController(IConfiguration config, IDispatcher dispatc
     public async Task<IActionResult> UserSignUp([FromBody] CreateUserCommand command)
     {
         var emailExists =
-            await dispatcher.Dispatch<GetUserByEmailQuery, bool>(new GetUserByEmailQuery { Email = command.Email });
-        if (emailExists)
+            await dispatcher.Dispatch<GetUserByEmailQuery, User>(new GetUserByEmailQuery { Email = command.Email });
+        if (emailExists != null)
             return BadRequest("Email is already registered.");
         var newUser = await dispatcher.Dispatch<CreateUserCommand, User>(command);
-        var token = GenerateJwtToken(newUser);
+        var token = await GenerateJwtToken(newUser);
 
-        return Created("user", new { token = token });
+        return Created("user", new { token });
     }
 
     [AllowAnonymous]
@@ -37,13 +37,13 @@ public class AuthenticationController(IConfiguration config, IDispatcher dispatc
     {
         // Ensure email is unique before creating a new author
         var emailExists =
-            await dispatcher.Dispatch<GetUserByEmailQuery, bool>(new GetUserByEmailQuery { Email = command.Email });
-        if (emailExists)
+            await dispatcher.Dispatch<GetUserByEmailQuery, User>(new GetUserByEmailQuery { Email = command.Email });
+        if (emailExists != null)
             return BadRequest("Email is already registered.");
 
         var newAuthor = await dispatcher.Dispatch<CreateUserCommand, User>(command);
 
-        var token = GenerateJwtToken(newAuthor);
+        var token = await GenerateJwtToken(newAuthor);
         return Created("author", new { token });
     }
 
@@ -59,7 +59,7 @@ public class AuthenticationController(IConfiguration config, IDispatcher dispatc
 
         if (user == null) return Unauthorized("Invalid email or password");
 
-        var token = GenerateJwtToken(user);
+        var token = await GenerateJwtToken(user);
         return Ok(new { token });
     }
 
@@ -69,7 +69,7 @@ public class AuthenticationController(IConfiguration config, IDispatcher dispatc
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
         var userPermissions =
             await dispatcher.Dispatch<GetUserPermissionsQuery, List<Permission>>(new GetUserPermissionsQuery
-                { userId = user.Id });
+            { userId = user.Id });
 
         var claims = new List<Claim>
         {
