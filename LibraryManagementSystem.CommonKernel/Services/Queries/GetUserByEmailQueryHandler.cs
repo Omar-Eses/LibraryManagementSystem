@@ -23,13 +23,12 @@ public class GetUserByEmailQueryHandler(LMSContext context, IRedisCacheService r
 
         // step 2 user not found in cache so check in database
         var user = await context.Users.FirstOrDefaultAsync(user => user.Email == request.Email);
-        if (user == null) throw new Exception("User not found");
-        // step 3 user found in database so add to cache
-        await CacheUserByIdAndEmail(user);
+        if (user != null) await CacheUserByIdAndEmail(user);
+        // step 3 user found in database so add to cache 
         return user;
     }
 
-    public async Task CacheUserByIdAndEmail(User user)
+    private async Task CacheUserByIdAndEmail(User user)
     {
         await redisCacheService.SetCacheDataAsync($"UserEmail_{user.Email}", user, _cacheDuration);
         await redisCacheService.SetCacheDataAsync($"UserId_{user.Id}", user, _cacheDuration);

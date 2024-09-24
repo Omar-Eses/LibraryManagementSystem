@@ -1,4 +1,6 @@
-﻿using LibraryManagementSystem.Data;
+﻿using LibraryManagementSystem.CommonKernel.Interfaces;
+using LibraryManagementSystem.CommonKernel.Services;
+using LibraryManagementSystem.Data;
 using LibraryManagementSystem.Interfaces;
 using LibraryManagementSystem.Models;
 using UserPermissions = LibraryManagementSystem.Models.UserPermissions;
@@ -15,7 +17,7 @@ public class UpdateUserCommand : IRequest<User>
     public List<long> UserPermissionsList { get; set; }
 }
 
-public class UpdateUserCommandHandler(LMSContext context) : IRequestHandler<UpdateUserCommand, User>
+public class UpdateUserCommandHandler(LMSContext context, IRabbitMQPublisher<UpdateUserCommand> rabbitMQPublisher) : IRequestHandler<UpdateUserCommand, User>
 {
     public async Task<User> Handle(UpdateUserCommand request)
     {
@@ -26,8 +28,9 @@ public class UpdateUserCommandHandler(LMSContext context) : IRequestHandler<Upda
         user.NumberOfBooksAllowed = request.NumberOfBooksAllowed;
         user.TotalFine = request.TotalFine;
         user.UpdatedAt = request.UpdatedAt ?? DateTimeOffset.UtcNow;
-        await UpdatePermissionsToUser(request.Id, request.UserPermissionsList);
-        await context.SaveChangesAsync();
+        await rabbitMQPublisher.PublishMessageToQueueAsync(request);
+        //await UpdatePermissionsToUser(request.Id, request.UserPermissionsList);
+        //await context.SaveChangesAsync();
 
         return user;
     }

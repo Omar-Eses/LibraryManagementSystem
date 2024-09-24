@@ -1,12 +1,11 @@
 ﻿using System.Reflection;
-using LibraryManagementSystem.Data;
 using LibraryManagementSystem.Interfaces;
 using LibraryManagementSystem.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using LibraryManagementSystem.CommonKernel.Interfaces;
 using LibraryManagementSystem.CommonKernel.Services;
+using LibraryManagementSystem.Services.Commands.UserCommandsHandlers;
 
 namespace LibraryManagementSystem.CommonKernel;
 
@@ -22,21 +21,17 @@ public static class LibraryManagementSystemModuleExtensions
         services.AddStackExchangeRedisCache(
             options =>
             {
-                options.Configuration = redisSettings["ConnectionString"]; // Fix method to use indexer
-                options.InstanceName = redisSettings["InstanceName"]; // Fix method to use indexer
+                options.Configuration = redisSettings["ConnectionString"];
+                options.InstanceName = redisSettings["InstanceName"];
             }
         );
+
+        services.AddSingleton<IRedisCacheService, RedisCacheService>();
+
         Console.WriteLine(@$"CS: {redisSettings["ConnectionString"]} - IN: {redisSettings["InstanceName"]}");
-        services.AddScoped<IRedisCacheService, RedisCacheService>();
-
-        var connectionString = configuration.GetConnectionString("LibraryManagementSystemContext");
-
-        services.AddDbContext<LMSContext>(opt =>
-           opt.UseNpgsql(
-                connectionString ?? throw new InvalidOperationException("Connection string 'LibraryManagementSystemContext' not found.")
-            )
-        );
-
+        services.AddScoped<IRabbitMQPublisher<CreateUserCommand>, RabbitMQPublisher<CreateUserCommand>>(); 
+        services.AddScoped<IRabbitMQPublisher<DeleteUserCommand>, RabbitMQPublisher<DeleteUserCommand>>();
+        services.AddScoped<IRabbitMQPublisher<UpdateUserCommand>, RabbitMQPublisher<UpdateUserCommand>>();
         return services;
     }
     public static IServiceCollection AddRequestHandlers(this IServiceCollection services, Assembly assembly)

@@ -4,14 +4,9 @@ using Newtonsoft.Json;
 
 namespace LibraryManagementSystem.CommonKernel.Services;
 
-public class RedisCacheService : IRedisCacheService
+public class RedisCacheService(IDistributedCache redisCache) : IRedisCacheService
 {
-    private readonly IDistributedCache _redisCache;
-
-    public RedisCacheService(IDistributedCache redisCache)
-    {
-        _redisCache = redisCache;
-    }
+    private readonly IDistributedCache _redisCache = redisCache;
 
     public async Task<T> GetCacheDataAsync<T>(string key)
     {

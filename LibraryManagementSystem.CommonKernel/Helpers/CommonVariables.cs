@@ -14,4 +14,7 @@ public static class CommonVariables
     {
         1, 2, 4
     };
+    public const string queueName = "LibraryManagementSystemQueue";
+    public const string exchangeName = "amq.direct";
+    public const string routingKey = "LibraryManagementSystemRoutingKey";
 }
