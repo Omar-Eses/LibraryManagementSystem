@@ -6,6 +6,9 @@ using Microsoft.Extensions.Configuration;
 using LibraryManagementSystem.CommonKernel.Interfaces;
 using LibraryManagementSystem.CommonKernel.Services;
 using LibraryManagementSystem.Services.Commands.UserCommandsHandlers;
+using LibraryManagementSystem.CommonKernel.Services.RabbitMQ;
+using LibraryManagementSystem.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagementSystem.CommonKernel;
 
@@ -25,11 +28,16 @@ public static class LibraryManagementSystemModuleExtensions
                 options.InstanceName = redisSettings["InstanceName"];
             }
         );
-
+        var connectionString = "server=localhost;database=LibraryManagementSystemContext;username=postgres;password=sqladmin123!@#";
+        services.AddDbContext<LMSContext>(opt =>
+            opt.UseNpgsql(
+                connectionString ?? throw new InvalidOperationException("Connection string 'LibraryManagementSystemContext' not found.")
+            )
+        );
         services.AddSingleton<IRedisCacheService, RedisCacheService>();
 
         Console.WriteLine(@$"CS: {redisSettings["ConnectionString"]} - IN: {redisSettings["InstanceName"]}");
-        services.AddScoped<IRabbitMQPublisher<CreateUserCommand>, RabbitMQPublisher<CreateUserCommand>>(); 
+        services.AddScoped<IRabbitMQPublisher<CreateUserCommand>, RabbitMQPublisher<CreateUserCommand>>();
         services.AddScoped<IRabbitMQPublisher<DeleteUserCommand>, RabbitMQPublisher<DeleteUserCommand>>();
         services.AddScoped<IRabbitMQPublisher<UpdateUserCommand>, RabbitMQPublisher<UpdateUserCommand>>();
         return services;

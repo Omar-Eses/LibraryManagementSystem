@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 using RabbitMQ.Client;
 using System.Text;
 
-namespace LibraryManagementSystem.CommonKernel.Services;
+namespace LibraryManagementSystem.CommonKernel.Services.RabbitMQ;
 
 public class RabbitMQPublisher<T> : IRabbitMQPublisher<T>
 {
@@ -30,14 +30,13 @@ public class RabbitMQPublisher<T> : IRabbitMQPublisher<T>
         };
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
-        _channel.ExchangeDeclare(exchange: CommonVariables.exchangeName, type: ExchangeType.Direct, durable: true);
-        _channel.QueueDeclare(queue: CommonVariables.queueName,
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            arguments: null
-        );
-        _channel.QueueBind(queue: CommonVariables.queueName, exchange: CommonVariables.exchangeName, routingKey: CommonVariables.routingKey);
+        _channel.QueueDeclare(queue: CommonVariables.userQueue,
+           durable: true,
+           exclusive: false,
+           autoDelete: false,
+           arguments: null
+       );
+        _channel.QueueBind(queue: CommonVariables.userQueue, exchange: CommonVariables.exchangeName, routingKey: CommonVariables.routingKey);
     }
     public async Task PublishMessageToQueueAsync(T message)
     {
@@ -48,9 +47,11 @@ public class RabbitMQPublisher<T> : IRabbitMQPublisher<T>
         {
             await Task.Run(() =>
             {
-                _channel.BasicPublish(exchange: CommonVariables.exchangeName,
+                _channel.BasicPublish(
+                    exchange: CommonVariables.exchangeName,
                     routingKey: CommonVariables.routingKey,
-                    basicProperties: null, body: body
+                    basicProperties: null,
+                    body: body
                 );
             });
         }

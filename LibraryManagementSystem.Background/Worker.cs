@@ -1,30 +1,28 @@
-using LibraryManagementSystem.CommonKernel.Services;
-using LibraryManagementSystem.Services.Commands.UserCommandsHandlers;
-using StackExchange.Redis;
+using LibraryManagementSystem.CommonKernel.Interfaces;
+using LibraryManagementSystem.Models;
 
 namespace LibraryManagementSystem.Background
 {
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
-        private readonly RabbitMQSubscriber<CreateUserCommand> _subscriber;
-        public Worker(ILogger<Worker> logger, RabbitMQSubscriber<CreateUserCommand> subscriber)
+        private readonly IRabbitMQUserSubscriber<User> _rabbitMQSubscriber;
+        public Worker(ILogger<Worker> logger, IRabbitMQUserSubscriber<User> rabbitMQSubscriber)
         {
             _logger = logger;
-            _subscriber = subscriber;
+            _rabbitMQSubscriber = rabbitMQSubscriber;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            await _rabbitMQSubscriber.ConsumeMessageFromQueueAsync();
             while (!stoppingToken.IsCancellationRequested)
             {
-                await _subscriber.ConsumeMessageFromQueue();
-
                 if (_logger.IsEnabled(LogLevel.Information))
                 {
                     _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
                 }
-                await Task.Delay(1000, stoppingToken);
+                await Task.Delay(5000, stoppingToken);
             }
         }
     }
