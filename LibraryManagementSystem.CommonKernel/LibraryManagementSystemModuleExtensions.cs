@@ -25,14 +25,14 @@ public static class LibraryManagementSystemModuleExtensions
             options =>
             {
 
-                options.Configuration = redisSettings["Host"]; // "host": "localhost:6379";
-                options.InstanceName = redisSettings["InstanceName"]; // "InstanceName": "LibraryCache";
+                options.Configuration = redisSettings["ConnectionString"];
+                options.InstanceName = redisSettings["InstanceName"];
             }
         );
-        var connectionString = "server=localhost;database=LibraryManagementSystemContext;username=postgres;password=sqladmin123!@#";
+        var connectionString = configuration.GetSection("ConnectionStrings");
         services.AddDbContext<LMSContext>(opt =>
             opt.UseNpgsql(
-                connectionString ?? throw new InvalidOperationException("Connection string 'LibraryManagementSystemContext' not found.")
+                connectionString["LibraryManagementSystemContext"] ?? throw new InvalidOperationException("Connection string 'LibraryManagementSystemContext' not found.")
             )
         );
         services.AddSingleton<IRedisCacheService, RedisCacheService>();
