@@ -25,7 +25,7 @@ public static class LibraryManagementSystemModuleExtensions
             options =>
             {
 
-                options.Configuration = redisSettings["ConnectionString"]; // "ConnectionString": "localhost:6379";
+                options.Configuration = redisSettings["Host"]; // "host": "localhost:6379";
                 options.InstanceName = redisSettings["InstanceName"]; // "InstanceName": "LibraryCache";
             }
         );

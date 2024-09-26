@@ -17,10 +17,6 @@ public class ValidateUserCredentialsQueryHandler(LMSContext context)
     : IRequestHandler<ValidateUserCredentialsQuery, User>
 {
     private readonly TimeSpan _cacheDuration = CommonVariables.CacheExpirationTime;
-    public async Task<User> Handle(ValidateUserCredentialsQuery request)
-    {
-
-        return await context.Users
+    public async Task<User> Handle(ValidateUserCredentialsQuery request)=> await context.Users
         .FirstOrDefaultAsync(u => u.Email == request.Email && u.HashedPassword == request.Password) ?? throw new Exception("Invalid credentials");
-    }
 }

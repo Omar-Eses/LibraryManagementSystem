@@ -20,10 +20,9 @@ public class GetBookQueryHandler(LMSContext context, IRedisCacheService cacheSer
         // step 2 => else get book from DB
         var book = await context.Books.FindAsync(request.Id) ?? throw new Exception("Book not found");
         // step 3 => set cache in parallel call cachebookasync
-        CacheBookAsync(book);
+        await cacheService.SetCacheDataAsync($"Book_{book.Id}", book);
         // step 4 => return book
         return book;
     }
-    private void CacheBookAsync(Book book)
-        => Task.Run(() => cacheService.SetCacheDataAsync($"Book_{book.Id}", book, _cacheDuration));
+
 }

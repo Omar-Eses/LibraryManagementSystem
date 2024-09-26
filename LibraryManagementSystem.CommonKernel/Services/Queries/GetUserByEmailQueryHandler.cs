@@ -15,7 +15,6 @@ public class GetUserByEmailQuery : IRequest<User>
 
 public class GetUserByEmailQueryHandler(LMSContext context, IRedisCacheService redisCacheService) : IRequestHandler<GetUserByEmailQuery, User>
 {
-    private readonly TimeSpan _cacheDuration = CommonVariables.CacheExpirationTime;
     public async Task<User> Handle(GetUserByEmailQuery request)
     {
         var cachedUser = await redisCacheService.GetCacheDataAsync<User>($"UserEmail_{request.Email}");
@@ -30,7 +29,7 @@ public class GetUserByEmailQueryHandler(LMSContext context, IRedisCacheService r
 
     private async Task CacheUserByIdAndEmail(User user)
     {
-        await redisCacheService.SetCacheDataAsync($"UserEmail_{user.Email}", user, _cacheDuration);
-        await redisCacheService.SetCacheDataAsync($"UserId_{user.Id}", user, _cacheDuration);
+        await redisCacheService.SetCacheDataAsync($"UserEmail_{user.Email}", user);
+        await redisCacheService.SetCacheDataAsync($"UserId_{user.Id}", user);
     }
 }

@@ -1,6 +1,5 @@
 ﻿using LibraryManagementSystem.CommonKernel.Interfaces;
 using LibraryManagementSystem.Data;
-using LibraryManagementSystem.Helpers;
 using LibraryManagementSystem.Interfaces;
 using LibraryManagementSystem.Models;
 using Microsoft.EntityFrameworkCore;
@@ -13,8 +12,6 @@ public class GetAllBooksQuery : IRequest<IEnumerable<Book>>
 
 public class GetAllBooksQueryHandler(LMSContext context, IRedisCacheService cacheService) : IRequestHandler<GetAllBooksQuery, IEnumerable<Book>>
 {
-    private readonly TimeSpan _cacheDuration = CommonVariables.CacheExpirationTime;
-
     public async Task<IEnumerable<Book>> Handle(GetAllBooksQuery query)
     {
         var cachedBooks = new List<Book>();
@@ -24,24 +21,18 @@ public class GetAllBooksQueryHandler(LMSContext context, IRedisCacheService cach
         foreach (var bookId in allBookIds)
         {
             var cachedBook = await cacheService.GetCacheDataAsync<Book>($"Book_{bookId}");
-            if (cachedBook != null)
-            {
-                cachedBooks.Add(cachedBook);
-            }
-            else
-            {
-                uncachedBooksIds.Add(bookId);
-            }
+            
+            if (cachedBook != null) cachedBooks.Add(cachedBook);
+            else uncachedBooksIds.Add(bookId);
+
         }
-        if (!uncachedBooksIds.Any())
-        {
-            return cachedBooks;
-        }
+        if (!uncachedBooksIds.Any()) return cachedBooks;
+        
         var uncachedBooks = await context.Books.Where(b => uncachedBooksIds.Contains(b.Id)).ToListAsync();
 
         foreach (var book in uncachedBooks)
         {
-            await cacheService.SetCacheDataAsync($"Book_{book.Id}", book, _cacheDuration);
+            await cacheService.SetCacheDataAsync($"Book_{book.Id}", book);
         }
 
         cachedBooks.AddRange(uncachedBooks);

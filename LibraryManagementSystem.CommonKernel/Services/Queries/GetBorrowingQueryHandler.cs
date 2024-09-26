@@ -23,10 +23,8 @@ public class GetBorrowingQueryHandler(LMSContext context, IRedisCacheService cac
         var borrowedRecord = await context.BorrowingRecord.FindAsync(request.Id) ?? throw new Exception("Borrowing not found");
 
         // step 3 => set cache in parallel call cacheBorrowingRecordAsync
-        CacheBorrowingRecordAsync(borrowedRecord);
+        await cacheService.SetCacheDataAsync($"BorrowingRecord_{borrowedRecord.Id}", borrowedRecord);
         // step 4 => return borrowed record
         return borrowedRecord;
     }
-    private void CacheBorrowingRecordAsync(BorrowingRecord borrowedRecord)
-        => Task.Run(() => cacheService.SetCacheDataAsync($"BorrowingRecord_{borrowedRecord.Id}", borrowedRecord, _cacheDuration));
 }
