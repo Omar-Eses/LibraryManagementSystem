@@ -30,7 +30,7 @@ public class GetAllUsersQueryHandler(LMSContext context, IRedisCacheService cach
         var uncachedUsers = await context.Users.Where(u => uncachedUsersIds.Contains(u.Id)).ToListAsync();
         foreach (var user in uncachedUsers)
         {
-            await cacheService.SetCacheDataAsync($"User_{user.Id}", user, _cacheDuration);
+            await cacheService.SetCacheDataAsync($"User_{user.Id}", user);
         }
 
         cachedUsers.AddRange(uncachedUsers);

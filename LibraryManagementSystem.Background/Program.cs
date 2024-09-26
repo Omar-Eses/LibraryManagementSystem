@@ -17,6 +17,7 @@ builder.Services.AddSingleton<IRabbitMQUserSubscriber<User>, RabbitMQUserSubscri
 builder.Services.AddStackExchangeRedisCache(
    options =>
    {
+       // TODO : read them from appsettings
 
        options.Configuration = "localhost:6379";
        options.InstanceName = "LibraryCache";
@@ -25,11 +26,14 @@ builder.Services.AddStackExchangeRedisCache(
 builder.Services.AddSingleton<IConnectionFactory>(sp =>
 new ConnectionFactory
 {
+    // TODO : remove this 
+
     HostName = "localhost",
     Port = 5672,
     UserName = "guest",
     Password = "guest",
 });
+//check this 
 builder.Services.AddSingleton<IConnection>(sp =>
 {
     var connectionFactory = sp.GetRequiredService<IConnectionFactory>();
@@ -40,7 +44,7 @@ builder.Services.AddSingleton<IModel>(sp =>
     var connection = sp.GetRequiredService<IConnection>();
     return connection.CreateModel();
 });
-builder.Services.AddHostedService<Worker>();
+builder.Services.AddHostedService<UserWorker>();
 
 var host = builder.Build();
 host.Run();

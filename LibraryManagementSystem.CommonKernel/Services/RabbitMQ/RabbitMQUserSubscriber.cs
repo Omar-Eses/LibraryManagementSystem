@@ -29,6 +29,7 @@ public class RabbitMQUserSubscriber<T> : IRabbitMQUserSubscriber<T>
 
     public async Task ConsumeMessageFromQueueAsync()
     {
+        // TODO : read them from appsettings
         var factory = new ConnectionFactory()
         {
             HostName = "localhost",
@@ -36,6 +37,7 @@ public class RabbitMQUserSubscriber<T> : IRabbitMQUserSubscriber<T>
             UserName = "guest",
             Password = "guest",
         };
+
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel(); // create model
 
@@ -57,44 +59,43 @@ public class RabbitMQUserSubscriber<T> : IRabbitMQUserSubscriber<T>
             await ProcessMessageAsync(messageJson);
             _channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
         };
-        _channel.BasicConsume(queue: CommonVariables.userQueue, autoAck: false, consumer: consumer);
+         _channel.BasicConsume(queue: CommonVariables.userQueue, autoAck: false, consumer: consumer);
     }
 
     public async Task ProcessMessageAsync(string message)
     {
-        using (var scope = _serviceProvider.CreateScope())
-        {
-            if (message == null) return;
-            Console.WriteLine(message);
-            var dispatcher = scope.ServiceProvider.GetRequiredService<IDispatcher>();
+        // TODO : separate the logic from the common service
 
-            var userMessage = JsonConvert.DeserializeObject<User>(message);
-            // replace cw with logging into a file
-            if (string.IsNullOrEmpty(message))
-                return;
-            if (userMessage.Id != 0 && userMessage.Username == null)
-            {
-                var deleteUserCommand = _mapper.Map<DeleteUserCommand>(userMessage);
-                var userToDelete = await dispatcher.Dispatch<DeleteUserCommand, User>(deleteUserCommand);
-                Console.WriteLine($"User deleted: {userToDelete.Username}");
-                await _redisCacheService.RemoveCacheDataAsync($"LibraryCacheUser_{userToDelete.Id}");
-            }
-            else if (userMessage.Id != 0 && userMessage.Username != null)
-            {
-                var updateUserCommand = _mapper.Map<UpdateUserCommand>(userMessage);
-                var userToUpdate = await dispatcher.Dispatch<UpdateUserCommand, User>(updateUserCommand);
-                Console.WriteLine($"User updated: {userToUpdate.Username}");
-                await _redisCacheService.RemoveCacheDataAsync($"LibraryCacheUser_{userToUpdate.Id}");
-                await _redisCacheService.SetCacheDataAsync($"LibraryCacheUser_{userToUpdate.Id}", userToUpdate);
-            }
-            else if (userMessage.Id == 0)
-            {
-                CreateUserCommand userToDelete = JsonConvert.DeserializeObject<CreateUserCommand>(message);
-                var createUserCommand = _mapper.Map<CreateUserCommand>(userMessage);
-                var userToCreate = await dispatcher.Dispatch<CreateUserCommand, User>(createUserCommand);
-                Console.WriteLine($"User created: {userToCreate.Username}");
-                await _redisCacheService.SetCacheDataAsync(key: $"LibraryCacheUser_{userToCreate.Id}", data: userToCreate);
-            }
+        using var scope = _serviceProvider.CreateScope();
+        if (message == null) return;
+        Console.WriteLine(message);
+        var dispatcher = scope.ServiceProvider.GetRequiredService<IDispatcher>();
+
+        var userMessage = JsonConvert.DeserializeObject<User>(message);
+        // replace cw with logging into a file
+
+        if (string.IsNullOrEmpty(message)) return;
+
+        if (userMessage.Id != 0 && userMessage.Username == null)
+        {
+            var deleteUserCommand = _mapper.Map<DeleteUserCommand>(userMessage);
+            var userToDelete = await dispatcher.Dispatch<DeleteUserCommand, User>(deleteUserCommand);
+            Console.WriteLine($"User deleted: {userToDelete.Username}");
+            await _redisCacheService.RemoveCacheDataAsync($"LibraryCacheUser_{userToDelete.Id}");
+        }
+        else if (userMessage.Id != 0 && userMessage.Username != null)
+        {
+            var updateUserCommand = _mapper.Map<UpdateUserCommand>(userMessage);
+            var userToUpdate = await dispatcher.Dispatch<UpdateUserCommand, User>(updateUserCommand);
+            Console.WriteLine($"User updated: {userToUpdate.Username}");
+            await _redisCacheService.UpdateCacheDataAsync("LibraryCacheUser_{userToUpdate.Id}", userToUpdate);
+        }
+        else if (userMessage.Id == 0)
+        {
+            var createUserCommand = _mapper.Map<CreateUserCommand>(userMessage);
+            var userToCreate = await dispatcher.Dispatch<CreateUserCommand, User>(createUserCommand);
+            Console.WriteLine($"User created: {userToCreate.Username}");
+            await _redisCacheService.SetCacheDataAsync(key: $"LibraryCacheUser_{userToCreate.Id}", data: userToCreate);
         }
     }
 }

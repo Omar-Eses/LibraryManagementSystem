@@ -14,6 +14,8 @@ public class RabbitMQPublisher<T> : IRabbitMQPublisher<T>
     public RabbitMQPublisher()
     {
         // connection creation & configuration
+        // TODO : read them from appsettings
+
         var factory = new ConnectionFactory()
         {
             HostName = "localhost",

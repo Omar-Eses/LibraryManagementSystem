@@ -26,7 +26,7 @@ public class UpdateUserCommandHandler(LMSContext context) : IRequestHandler<Upda
         user.HashedPassword = request.HashedPassword;
         user.NumberOfBooksAllowed = request.NumberOfBooksAllowed;
         user.TotalFine = request.TotalFine;
-        user.UpdatedAt = request.UpdatedAt ?? DateTimeOffset.UtcNow;
+        user.UpdatedAt = request.UpdatedAt;
         await UpdatePermissionsToUser(request.Id, request.UserPermissionsList);
         await context.SaveChangesAsync();
 
@@ -47,6 +47,6 @@ public class UpdateUserCommandHandler(LMSContext context) : IRequestHandler<Upda
         }
 
         await context.SaveChangesAsync();
-        return await Task.FromResult(true);
+        return true;
     }
 }

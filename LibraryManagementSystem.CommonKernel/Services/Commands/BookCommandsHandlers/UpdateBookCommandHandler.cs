@@ -8,6 +8,7 @@ namespace LibraryManagementSystem.Services.Commands.BookCommandsHandlers;
 
 public class UpdateBookCommand : IRequest<Book>
 {
+
     public long Id { get;set; }
     public string BookTitle { get; set; }
     public string BookDescription { get; set; }
@@ -17,7 +18,6 @@ public class UpdateBookCommand : IRequest<Book>
     public DateOnly BookPublishedDate { get; set; }
     public long AuthorId { get; set; }
     public BorrowedStatus BorrowedStatus { get; set; }
-    public DateTimeOffset? UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
 public class UpdateBookCommandHandler(LMSContext context) : IRequestHandler<UpdateBookCommand, Book>
 {

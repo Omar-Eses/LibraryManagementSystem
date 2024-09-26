@@ -14,6 +14,7 @@ public class DeleteUserCommand : IRequest<User>
 
 public class DeleteUserCommandHandler(LMSContext context, IRabbitMQPublisher<DeleteUserCommand> rabbitMQPublisher) : IRequestHandler<DeleteUserCommand, User>
 {
+    //TODO : check the logic
     public async Task<User> Handle(DeleteUserCommand request)
     {
         var user = await context.Users.FindAsync(request.Id);
