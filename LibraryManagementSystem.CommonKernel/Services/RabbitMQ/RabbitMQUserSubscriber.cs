@@ -18,12 +18,13 @@ public class RabbitMQUserSubscriber<T> : IRabbitMQUserSubscriber<T>
     private IModel _channel;
     private readonly IServiceProvider _serviceProvider;
     private readonly IMapper _mapper;
+    private readonly IRedisCacheService _redisCacheService;
 
-
-    public RabbitMQUserSubscriber(IServiceProvider serviceProvider, IMapper mapper)
+    public RabbitMQUserSubscriber(IServiceProvider serviceProvider, IMapper mapper, IRedisCacheService redisCacheService)
     {
         _serviceProvider = serviceProvider;
         _mapper = mapper;
+        _redisCacheService = redisCacheService;
     }
 
     public async Task ConsumeMessageFromQueueAsync()
@@ -38,9 +39,6 @@ public class RabbitMQUserSubscriber<T> : IRabbitMQUserSubscriber<T>
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel(); // create model
 
-        Console.WriteLine("[*] waiting for logs");
-        Console.WriteLine("from queue" + _channel.ToString());
-        // => QueueDeclare()
         _channel.QueueDeclare(queue: CommonVariables.userQueue,
             durable: true,
             exclusive: false,
@@ -55,7 +53,7 @@ public class RabbitMQUserSubscriber<T> : IRabbitMQUserSubscriber<T>
         consumer.Received += async (model, ea) =>
         {
             var body = ea.Body.ToArray();
-            var messageJson = Encoding.UTF8.GetString(body); 
+            var messageJson = Encoding.UTF8.GetString(body);
             await ProcessMessageAsync(messageJson);
             _channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
         };
@@ -71,27 +69,30 @@ public class RabbitMQUserSubscriber<T> : IRabbitMQUserSubscriber<T>
             var dispatcher = scope.ServiceProvider.GetRequiredService<IDispatcher>();
 
             var userMessage = JsonConvert.DeserializeObject<User>(message);
-
+            // replace cw with logging into a file
             if (string.IsNullOrEmpty(message))
                 return;
             if (userMessage.Id != 0 && userMessage.Username == null)
             {
                 var deleteUserCommand = _mapper.Map<DeleteUserCommand>(userMessage);
-                var deletedUser = await dispatcher.Dispatch<DeleteUserCommand, User>(deleteUserCommand);
-                Console.WriteLine($"User deleted: {deletedUser.Username}");
+                var userToDelete = await dispatcher.Dispatch<DeleteUserCommand, User>(deleteUserCommand);
+                Console.WriteLine($"User deleted: {userToDelete.Username}");
+                await _redisCacheService.RemoveCacheDataAsync($"LibraryCacheUser_{userToDelete.Id}");
             }
             else if (userMessage.Id != 0 && userMessage.Username != null)
             {
                 var updateUserCommand = _mapper.Map<UpdateUserCommand>(userMessage);
-                var updatedUser = await dispatcher.Dispatch<UpdateUserCommand, User>(updateUserCommand);
-                Console.WriteLine($"User updated: {updatedUser.Username}");
+                var userToUpdate = await dispatcher.Dispatch<UpdateUserCommand, User>(updateUserCommand);
+                Console.WriteLine($"User updated: {userToUpdate.Username}");
+                await _redisCacheService.UpdateCacheDataAsync($"LibraryCacheUser_{userToUpdate.Id}", userToUpdate);
             }
             else if (userMessage.Id == 0)
             {
                 CreateUserCommand userToDelete = JsonConvert.DeserializeObject<CreateUserCommand>(message);
                 var createUserCommand = _mapper.Map<CreateUserCommand>(userMessage);
-                var createdUser = await dispatcher.Dispatch<CreateUserCommand, User>(createUserCommand);
-                Console.WriteLine($"User created: {createdUser.Username}");
+                var userToCreate = await dispatcher.Dispatch<CreateUserCommand, User>(createUserCommand);
+                Console.WriteLine($"User created: {userToCreate.Username}");
+                await _redisCacheService.SetCacheDataAsync(key: $"LibraryCacheUser_{userToCreate.Id}", data: userToCreate);
             }
         }
     }

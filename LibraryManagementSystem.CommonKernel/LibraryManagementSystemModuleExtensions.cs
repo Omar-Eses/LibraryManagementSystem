@@ -24,6 +24,7 @@ public static class LibraryManagementSystemModuleExtensions
         services.AddStackExchangeRedisCache(
             options =>
             {
+
                 options.Configuration = redisSettings["ConnectionString"];
                 options.InstanceName = redisSettings["InstanceName"];
             }
