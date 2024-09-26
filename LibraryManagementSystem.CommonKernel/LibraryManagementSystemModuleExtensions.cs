@@ -25,8 +25,8 @@ public static class LibraryManagementSystemModuleExtensions
             options =>
             {
 
-                options.Configuration = redisSettings["ConnectionString"];
-                options.InstanceName = redisSettings["InstanceName"];
+                options.Configuration = redisSettings["ConnectionString"]; // "ConnectionString": "localhost:6379";
+                options.InstanceName = redisSettings["InstanceName"]; // "InstanceName": "LibraryCache";
             }
         );
         var connectionString = "server=localhost;database=LibraryManagementSystemContext;username=postgres;password=sqladmin123!@#";

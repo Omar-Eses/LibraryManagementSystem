@@ -84,7 +84,8 @@ public class RabbitMQUserSubscriber<T> : IRabbitMQUserSubscriber<T>
                 var updateUserCommand = _mapper.Map<UpdateUserCommand>(userMessage);
                 var userToUpdate = await dispatcher.Dispatch<UpdateUserCommand, User>(updateUserCommand);
                 Console.WriteLine($"User updated: {userToUpdate.Username}");
-                await _redisCacheService.UpdateCacheDataAsync($"LibraryCacheUser_{userToUpdate.Id}", userToUpdate);
+                await _redisCacheService.RemoveCacheDataAsync($"LibraryCacheUser_{userToUpdate.Id}");
+                await _redisCacheService.SetCacheDataAsync($"LibraryCacheUser_{userToUpdate.Id}", userToUpdate);
             }
             else if (userMessage.Id == 0)
             {
