@@ -8,6 +8,7 @@ namespace LibraryManagementSystem.Services.Commands.UserCommandsHandlers;
 public class UpdateUserCommand : IRequest<User>
 {
     public long Id { get; set; }
+    public string Username { get; set; }
     public string HashedPassword { get; set; }
     public int NumberOfBooksAllowed { get; set; }
     public decimal? TotalFine { get; set; }
@@ -21,7 +22,7 @@ public class UpdateUserCommandHandler(LMSContext context) : IRequestHandler<Upda
     {
         var user = await context.Users.FindAsync(request.Id);
         if (user == null) throw new Exception("User not found");
-
+        user.Username = request.Username;
         user.HashedPassword = request.HashedPassword;
         user.NumberOfBooksAllowed = request.NumberOfBooksAllowed;
         user.TotalFine = request.TotalFine;

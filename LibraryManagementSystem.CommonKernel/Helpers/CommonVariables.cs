@@ -14,4 +14,9 @@ public static class CommonVariables
     {
         1, 2, 4
     };
+    public const string userQueue = "LMSUserQueue";
+    public const string bookQueue = "LMSBookQueue";
+    public const string bRecordQueue = "LMSBRecordQueue";
+    public const string exchangeName = "amq.direct";
+    public const string routingKey = "LibraryManagementSystemRoutingKey";
 }

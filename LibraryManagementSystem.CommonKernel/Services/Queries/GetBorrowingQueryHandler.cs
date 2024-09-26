@@ -28,5 +28,5 @@ public class GetBorrowingQueryHandler(LMSContext context, IRedisCacheService cac
         return borrowedRecord;
     }
     private void CacheBorrowingRecordAsync(BorrowingRecord borrowedRecord)
-        => Task.Run(() => cacheService.SetCacheDataAsync($"BorrowingRecord_{borrowedRecord.Id}", borrowedRecord, _cacheDuration);
+        => Task.Run(() => cacheService.SetCacheDataAsync($"BorrowingRecord_{borrowedRecord.Id}", borrowedRecord, _cacheDuration));
 }

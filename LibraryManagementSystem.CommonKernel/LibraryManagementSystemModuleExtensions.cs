@@ -1,12 +1,14 @@
 ﻿using System.Reflection;
-using LibraryManagementSystem.Data;
 using LibraryManagementSystem.Interfaces;
 using LibraryManagementSystem.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using LibraryManagementSystem.CommonKernel.Interfaces;
-using LibraryManagementSystem.CommonKernel.Services;
+using LibraryManagementSystem.Services.Commands.UserCommandsHandlers;
+using LibraryManagementSystem.CommonKernel.Services.RabbitMQ;
+using LibraryManagementSystem.Data;
+using Microsoft.EntityFrameworkCore;
+using LibraryManagementSystem.CommonKernel.Services.Redis;
 
 namespace LibraryManagementSystem.CommonKernel;
 
@@ -22,21 +24,23 @@ public static class LibraryManagementSystemModuleExtensions
         services.AddStackExchangeRedisCache(
             options =>
             {
-                options.Configuration = redisSettings["ConnectionString"]; // Fix method to use indexer
-                options.InstanceName = redisSettings["InstanceName"]; // Fix method to use indexer
+
+                options.Configuration = redisSettings["ConnectionString"]; // "ConnectionString": "localhost:6379";
+                options.InstanceName = redisSettings["InstanceName"]; // "InstanceName": "LibraryCache";
             }
         );
-        Console.WriteLine(@$"CS: {redisSettings["ConnectionString"]} - IN: {redisSettings["InstanceName"]}");
-        services.AddScoped<IRedisCacheService, RedisCacheService>();
-
-        var connectionString = configuration.GetConnectionString("LibraryManagementSystemContext");
-
+        var connectionString = "server=localhost;database=LibraryManagementSystemContext;username=postgres;password=sqladmin123!@#";
         services.AddDbContext<LMSContext>(opt =>
-           opt.UseNpgsql(
+            opt.UseNpgsql(
                 connectionString ?? throw new InvalidOperationException("Connection string 'LibraryManagementSystemContext' not found.")
             )
         );
+        services.AddSingleton<IRedisCacheService, RedisCacheService>();
 
+        Console.WriteLine(@$"CS: {redisSettings["ConnectionString"]} - IN: {redisSettings["InstanceName"]}");
+        services.AddScoped<IRabbitMQPublisher<CreateUserCommand>, RabbitMQPublisher<CreateUserCommand>>();
+        services.AddScoped<IRabbitMQPublisher<DeleteUserCommand>, RabbitMQPublisher<DeleteUserCommand>>();
+        services.AddScoped<IRabbitMQPublisher<UpdateUserCommand>, RabbitMQPublisher<UpdateUserCommand>>();
         return services;
     }
     public static IServiceCollection AddRequestHandlers(this IServiceCollection services, Assembly assembly)

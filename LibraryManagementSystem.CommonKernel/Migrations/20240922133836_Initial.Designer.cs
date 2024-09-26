@@ -9,11 +9,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace LibraryManagementSystem.Migrations
+namespace LibraryManagementSystem.CommonKernel.Migrations
 {
     [DbContext(typeof(LMSContext))]
-    [Migration("20240908125518_numberofbooksallowedWithDefaultValue")]
-    partial class numberofbooksallowedWithDefaultValue
+    [Migration("20240922133836_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,48 +25,7 @@ namespace LibraryManagementSystem.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("LibraryManagementSystem.Models.Authors", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Address")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AuthorName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<DateOnly>("CreatedAt")
-                        .HasColumnType("date");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("HashedPassword")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("character varying(15)");
-
-                    b.Property<DateOnly>("UpdatedAt")
-                        .HasColumnType("date");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Authors");
-                });
-
-            modelBuilder.Entity("LibraryManagementSystem.Models.Books", b =>
+            modelBuilder.Entity("LibraryManagementSystem.Models.Book", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -75,9 +34,6 @@ namespace LibraryManagementSystem.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<long>("AuthorId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("AuthorsId")
                         .HasColumnType("bigint");
 
                     b.Property<string>("BookDescription")
@@ -102,17 +58,17 @@ namespace LibraryManagementSystem.Migrations
                     b.Property<int>("BorrowedStatus")
                         .HasColumnType("integer");
 
-                    b.Property<DateOnly>("CreatedAt")
-                        .HasColumnType("date");
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ISBN")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateOnly>("UpdatedAt")
-                        .HasColumnType("date");
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<long?>("UsersId")
+                    b.Property<long?>("UserId")
                         .HasColumnType("bigint");
 
                     b.Property<long?>("borrowedByUserId")
@@ -120,9 +76,7 @@ namespace LibraryManagementSystem.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AuthorsId");
-
-                    b.HasIndex("UsersId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Books");
                 });
@@ -135,22 +89,22 @@ namespace LibraryManagementSystem.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("BookId")
+                    b.Property<long?>("BookId")
                         .HasColumnType("bigint");
 
-                    b.Property<DateOnly>("BorrowedDate")
-                        .HasColumnType("date");
+                    b.Property<DateTimeOffset>("BorrowedDate")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateOnly>("DueDate")
-                        .HasColumnType("date");
+                    b.Property<DateTimeOffset>("DueDate")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal>("Fine")
-                        .HasColumnType("numeric");
+                    b.Property<double>("Fine")
+                        .HasColumnType("double precision");
 
-                    b.Property<DateOnly?>("ReturnedDate")
-                        .HasColumnType("date");
+                    b.Property<DateTimeOffset?>("ReturnedDate")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<long>("UserId")
+                    b.Property<long?>("UserId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
@@ -158,7 +112,7 @@ namespace LibraryManagementSystem.Migrations
                     b.ToTable("BorrowingRecord");
                 });
 
-            modelBuilder.Entity("LibraryManagementSystem.Models.Users", b =>
+            modelBuilder.Entity("LibraryManagementSystem.Models.Permission", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -166,13 +120,32 @@ namespace LibraryManagementSystem.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<DateOnly>("CreatedAt")
-                        .HasColumnType("date");
+                    b.Property<string>("PermissionName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Permission");
+                });
+
+            modelBuilder.Entity("LibraryManagementSystem.Models.User", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.Property<string>("HashedPassword")
                         .IsRequired()
@@ -189,38 +162,72 @@ namespace LibraryManagementSystem.Migrations
                     b.Property<decimal?>("TotalFine")
                         .HasColumnType("numeric");
 
-                    b.Property<DateOnly>("UpdatedAt")
-                        .HasColumnType("date");
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Username")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("LibraryManagementSystem.Models.Books", b =>
+            modelBuilder.Entity("LibraryManagementSystem.Models.UserPermissions", b =>
                 {
-                    b.HasOne("LibraryManagementSystem.Models.Authors", null)
-                        .WithMany("Books")
-                        .HasForeignKey("AuthorsId");
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
 
-                    b.HasOne("LibraryManagementSystem.Models.Users", null)
-                        .WithMany("Books")
-                        .HasForeignKey("UsersId");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("PermissionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserPermissions");
                 });
 
-            modelBuilder.Entity("LibraryManagementSystem.Models.Authors", b =>
+            modelBuilder.Entity("LibraryManagementSystem.Models.Book", b =>
                 {
-                    b.Navigation("Books");
+                    b.HasOne("LibraryManagementSystem.Models.User", null)
+                        .WithMany("Books")
+                        .HasForeignKey("UserId");
                 });
 
-            modelBuilder.Entity("LibraryManagementSystem.Models.Users", b =>
+            modelBuilder.Entity("LibraryManagementSystem.Models.UserPermissions", b =>
+                {
+                    b.HasOne("LibraryManagementSystem.Models.Permission", "Permission")
+                        .WithMany()
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LibraryManagementSystem.Models.User", "User")
+                        .WithMany("UserPermissions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("LibraryManagementSystem.Models.User", b =>
                 {
                     b.Navigation("Books");
+
+                    b.Navigation("UserPermissions");
                 });
 #pragma warning restore 612, 618
         }

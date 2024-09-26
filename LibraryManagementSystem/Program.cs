@@ -5,10 +5,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using LibraryManagementSystem.CommonKernel;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -83,6 +86,13 @@ builder.Services.AddAuthorizationBuilder()
 
 builder.Services.AddHttpContextAccessor();
 
+var connectionString = builder.Configuration.GetConnectionString("LibraryManagementSystemContext");
+builder.Services.AddDbContext<LMSContext>(opt =>
+   opt.UseNpgsql(
+        connectionString ?? throw new InvalidOperationException("Connection string 'LibraryManagementSystemContext' not found.")
+    )
+);
+
 builder.Services.AddLibraryManagementSystemModule(builder.Configuration);
 
 var app = builder.Build();
@@ -90,7 +100,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<LMSContext>();
-    InsertPermissionsIfNotExists(context); // Call the method to insert permissions
+    InsertPermissionsIfNotExists(context);
 }
 
 // Configure the HTTP request pipeline.
@@ -112,7 +122,7 @@ return;
 
 void InsertPermissionsIfNotExists(LMSContext context)
 {
-    if (context.Set<Permission>().Any()) return;
+    if (context.Set<Permission>().Any()) { return; }
     context.Set<Permission>().AddRange(
         new Permission { Id = 1, PermissionName = PermissionTypes.CanBorrow },
         new Permission { Id = 2, PermissionName = PermissionTypes.CanReturn },

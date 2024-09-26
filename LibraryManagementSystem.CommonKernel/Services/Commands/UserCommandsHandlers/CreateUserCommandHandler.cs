@@ -18,6 +18,11 @@ public class CreateUserCommandHandler(LMSContext context) : IRequestHandler<Crea
 {
     public async Task<User> Handle(CreateUserCommand request)
     {
+        Console.WriteLine(request);
+        if (string.IsNullOrEmpty(request.Username))
+        {
+            throw new ArgumentException("Username is required");
+        }
         var user = new User
         {
             Username = request.Username,
