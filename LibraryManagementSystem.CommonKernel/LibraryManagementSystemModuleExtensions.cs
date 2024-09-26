@@ -4,11 +4,11 @@ using LibraryManagementSystem.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using LibraryManagementSystem.CommonKernel.Interfaces;
-using LibraryManagementSystem.CommonKernel.Services;
 using LibraryManagementSystem.Services.Commands.UserCommandsHandlers;
 using LibraryManagementSystem.CommonKernel.Services.RabbitMQ;
 using LibraryManagementSystem.Data;
 using Microsoft.EntityFrameworkCore;
+using LibraryManagementSystem.CommonKernel.Services.Redis;
 
 namespace LibraryManagementSystem.CommonKernel;
 

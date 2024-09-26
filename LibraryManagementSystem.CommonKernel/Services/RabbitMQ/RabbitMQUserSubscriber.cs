@@ -39,7 +39,7 @@ public class RabbitMQUserSubscriber<T> : IRabbitMQUserSubscriber<T>
         _channel = _connection.CreateModel(); // create model
 
         Console.WriteLine("[*] waiting for logs");
-        Console.WriteLine(_channel.ToString());
+        Console.WriteLine("from queue" + _channel.ToString());
         // => QueueDeclare()
         _channel.QueueDeclare(queue: CommonVariables.userQueue,
             durable: true,

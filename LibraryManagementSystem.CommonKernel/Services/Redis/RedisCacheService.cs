@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 
-namespace LibraryManagementSystem.CommonKernel.Services;
+namespace LibraryManagementSystem.CommonKernel.Services.Redis;
 
 public class RedisCacheService(IDistributedCache redisCache) : IRedisCacheService
 {
@@ -15,7 +15,7 @@ public class RedisCacheService(IDistributedCache redisCache) : IRedisCacheServic
         {
             return JsonConvert.DeserializeObject<T>(cachedData);
         }
-        return default(T);
+        return default;
     }
 
     public async Task SetCacheDataAsync<T>(string key, T data, TimeSpan expirationTime)
