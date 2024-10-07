@@ -29,10 +29,6 @@ public class RabbitMqPublisher<T> : IRabbitMQPublisher<T>
             ServerName = factory.HostName,
 
         };
-        Console.WriteLine("here is host name => => => " + factory.HostName);
-        Console.WriteLine("here is Port => => => " + factory.Port);
-        Console.WriteLine("here is user  => => => " + factory.UserName);
-        Console.WriteLine("here is pass  => => => " + factory.Password);
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
         _channel.QueueDeclare(queue: CommonVariables.userQueue,

@@ -7,24 +7,61 @@ using LibraryManagementSystem.Domain.Helpers;
 using LibraryManagementSystem.Domain.Models;
 using LibraryManagementSystem.Infrastructure;
 using LibraryManagementSystem.Infrastructure.Data;
-using NLog.Extensions.Logging;
+using Serilog;
+using Serilog.Sinks.OpenTelemetry;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure NLog
-builder.Services.AddLogging(logging =>
-{
-    logging.ClearProviders();
-    logging.SetMinimumLevel(LogLevel.Trace);
-});
 
-// Add NLog as the logger provider
-builder.Services.AddSingleton<ILoggerProvider, NLogLoggerProvider>();
-
-// Add services to the container.
+// configure serilog with open telemtry
+Log.Logger = new LoggerConfiguration()
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File(
+        "logs/lms-service.txt", rollingInterval: RollingInterval.Day
+    )
+    .WriteTo.OpenTelemetry(x =>
+    {
+        x.Endpoint = "http://localhost:5341/ingest/otlp/v1/logs";
+        x.Protocol = OtlpProtocol.HttpProtobuf;
+        x.Headers = new Dictionary<string, string>
+        {
+            ["X-Seq-ApiKey"] = "NVtf3vW9kz0q90JQPik9"
+        };
+        x.ResourceAttributes = new Dictionary<string, object>
+        {
+            ["service.name"] = "LMS1",
+            ["deployment.environment"] = builder.Environment.EnvironmentName
+        };
+    })
+    .CreateLogger();
+builder.Services.AddSerilog();
+// configure serilog logger
+/*
+ * Log.Logger = new LoggerConfiguration().Enrich.FromLogContext().WriteTo.File(
+        "logs/lms-service.log", rollingInterval: RollingInterval.Hour
+    ).CreateLogger();
+builder.Services.AddSerilog();
+*/
+/*
+// Configure open telemetry logger
 builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-
+builder.Logging.AddOpenTelemetry(x =>
+{
+    x.IncludeScopes = true;
+    x.IncludeFormattedMessage = true;
+    x.SetResourceBuilder(ResourceBuilder.CreateEmpty().AddService("LMS service").AddAttributes(new Dictionary<string, object>()
+    {
+        ["deployment.environment"] = builder.Environment.EnvironmentName
+    }));
+    x.AddOtlpExporter(a =>
+    {
+        a.Endpoint = new Uri("http://localhost:5341/ingest/otlp/v1/logs");
+        a.Protocol = OtlpExportProtocol.HttpProtobuf;
+        a.Headers = "X-Seq-ApiKey=HcbBqyR6LStgg9bH83PC";
+    });
+});
+*/
 builder.Services.AddControllers();
 builder.Services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
 
@@ -75,6 +112,12 @@ builder.Services.AddAuthentication(options =>
     })
     .AddJwtBearer(options =>
     {
+        var jwtKey = builder.Configuration["JwtSettings:Key"];
+        if (string.IsNullOrEmpty(jwtKey))
+        {
+            throw new InvalidOperationException("JWT Key is not configured.");
+        }
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -83,8 +126,7 @@ builder.Services.AddAuthentication(options =>
             ValidateLifetime = true,
             ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
             ValidAudience = builder.Configuration["JwtSettings:Audience"],
-            IssuerSigningKey =
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
     });
 
