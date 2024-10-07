@@ -1,23 +1,18 @@
-using LibraryManagementSystem.CommonKernel.Interfaces;
-using LibraryManagementSystem.Models;
+using LibraryManagementSystem.Application.Interfaces;
+using LibraryManagementSystem.Domain.Models;
 
 namespace LibraryManagementSystem.Background
 {
-    public class UserWorker : BackgroundService
+    public class UserWorker(ILogger<UserWorker> logger, IRabbitMQUserSubscriber<User> rabbitMqSubscriber)
+        : BackgroundService
     {
-        private readonly ILogger<UserWorker> _logger;
-        private readonly IRabbitMQUserSubscriber<User> _rabbitMQSubscriber;
-        public UserWorker(ILogger<UserWorker> logger, IRabbitMQUserSubscriber<User> rabbitMQSubscriber)
-        {
-            _logger = logger;
-            _rabbitMQSubscriber = rabbitMQSubscriber;
-        }
+        private readonly ILogger<UserWorker> _logger = logger;
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                await _rabbitMQSubscriber.ConsumeMessageFromQueueAsync();
+                await rabbitMqSubscriber.ConsumeMessageFromQueueAsync();
             }
         }
     }
