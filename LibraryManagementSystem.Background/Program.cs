@@ -1,38 +1,30 @@
+using LibraryManagementSystem.Application;
+using LibraryManagementSystem.Application.Interfaces;
+using LibraryManagementSystem.Application.Services;
+using LibraryManagementSystem.Application.Services.RabbitMQ;
 using LibraryManagementSystem.Background;
-using LibraryManagementSystem.CommonKernel;
-using LibraryManagementSystem.CommonKernel.Interfaces;
-using LibraryManagementSystem.CommonKernel.Services;
-using LibraryManagementSystem.Models;
-using LibraryManagementSystem.Services;
+using LibraryManagementSystem.Domain.Models;
+using LibraryManagementSystem.Infrastructure.Data;
 using RabbitMQ.Client;
 
 var builder = Host.CreateApplicationBuilder(args);
-
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddLibraryManagementSystemModule(builder.Configuration);
+builder.Services.ConfigureLmsApplication(builder.Configuration);
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddScoped<IDispatcher, Dispatcher>();
 builder.Services.AddSingleton<IRabbitMQUserSubscriber<User>, RabbitMQUserSubscriber<User>>();
+builder.Services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
+
+var redisCacheSettings = builder.Configuration.GetSection("RedisCacheSettings");
 builder.Services.AddStackExchangeRedisCache(
-   options =>
-   {
-       // TODO : read them from appsettings
-
-       options.Configuration = "localhost:6379";
-       options.InstanceName = "LibraryCache";
-   }
+  options =>
+  {
+      options.Configuration = redisCacheSettings["ConnectionString"];
+      options.InstanceName = redisCacheSettings["InstanceName"];
+  }
 );
-builder.Services.AddSingleton<IConnectionFactory>(sp =>
-new ConnectionFactory
-{
-    // TODO : remove this 
 
-    HostName = "localhost",
-    Port = 5672,
-    UserName = "guest",
-    Password = "guest",
-});
 //check this 
 builder.Services.AddSingleton<IConnection>(sp =>
 {

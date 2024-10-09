@@ -1,18 +1,70 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Microsoft.EntityFrameworkCore;
+using LibraryManagementSystem.Application;
+using LibraryManagementSystem.Application.Interfaces;
 using LibraryManagementSystem.Domain.Helpers;
+using LibraryManagementSystem.Domain.Models;
+using LibraryManagementSystem.Infrastructure;
 using LibraryManagementSystem.Infrastructure.Data;
+using Serilog;
+using Serilog.Sinks.OpenTelemetry;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
 
+// configure serilog with open telemtry
+Log.Logger = new LoggerConfiguration()
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File(
+        "logs/lms-service.txt", rollingInterval: RollingInterval.Day
+    )
+    .WriteTo.OpenTelemetry(x =>
+    {
+        x.Endpoint = "http://localhost:5341/ingest/otlp/v1/logs";
+        x.Protocol = OtlpProtocol.HttpProtobuf;
+        x.Headers = new Dictionary<string, string>
+        {
+            ["X-Seq-ApiKey"] = "NVtf3vW9kz0q90JQPik9"
+        };
+        x.ResourceAttributes = new Dictionary<string, object>
+        {
+            ["service.name"] = "LMS1",
+            ["deployment.environment"] = builder.Environment.EnvironmentName
+        };
+    })
+    .CreateLogger();
+builder.Services.AddSerilog();
+// configure serilog logger
+/*
+ * Log.Logger = new LoggerConfiguration().Enrich.FromLogContext().WriteTo.File(
+        "logs/lms-service.log", rollingInterval: RollingInterval.Hour
+    ).CreateLogger();
+builder.Services.AddSerilog();
+*/
+/*
+// Configure open telemetry logger
+builder.Logging.ClearProviders();
+builder.Logging.AddOpenTelemetry(x =>
+{
+    x.IncludeScopes = true;
+    x.IncludeFormattedMessage = true;
+    x.SetResourceBuilder(ResourceBuilder.CreateEmpty().AddService("LMS service").AddAttributes(new Dictionary<string, object>()
+    {
+        ["deployment.environment"] = builder.Environment.EnvironmentName
+    }));
+    x.AddOtlpExporter(a =>
+    {
+        a.Endpoint = new Uri("http://localhost:5341/ingest/otlp/v1/logs");
+        a.Protocol = OtlpExportProtocol.HttpProtobuf;
+        a.Headers = "X-Seq-ApiKey=HcbBqyR6LStgg9bH83PC";
+    });
+});
+*/
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -44,7 +96,7 @@ builder.Services.AddSwaggerGen(options =>
                     Id = "bearer"
                 }
             },
-            new string[] { }
+            []
         }
     };
 
@@ -60,6 +112,12 @@ builder.Services.AddAuthentication(options =>
     })
     .AddJwtBearer(options =>
     {
+        var jwtKey = builder.Configuration["JwtSettings:Key"];
+        if (string.IsNullOrEmpty(jwtKey))
+        {
+            throw new InvalidOperationException("JWT Key is not configured.");
+        }
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -68,8 +126,7 @@ builder.Services.AddAuthentication(options =>
             ValidateLifetime = true,
             ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
             ValidAudience = builder.Configuration["JwtSettings:Audience"],
-            IssuerSigningKey =
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
     });
 
@@ -83,22 +140,24 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy(PermissionTypes.CanGetBook, policy => policy.RequireClaim("permission", PermissionTypes.CanGetBook));
 
 builder.Services.AddHttpContextAccessor();
-
-var connectionString = builder.Configuration.GetConnectionString("LibraryManagementSystemContext");
-builder.Services.AddDbContext<ApplicationDbContext>(opt =>
-   opt.UseNpgsql(
-        connectionString ?? throw new InvalidOperationException("Connection string 'LibraryManagementSystemContext' not found.")
-    )
-);
-
-// builder.Services.AddLibraryManagementSystemModule(builder.Configuration);
-
+builder.Services.ConfigureLmsApplication(builder.Configuration);
+builder.Services.ConfigureLmsInfrastructure(builder.Configuration);
 var app = builder.Build();
+if (app.Environment.IsDevelopment())
+    app.UseMigrationsEndPoint();
+else
+{
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
+}
+
+app.Logger.LogInformation("Adding Routes");
 
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
- }
+    InsertPermissionsIfNotExists(context);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -108,13 +167,31 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseStaticFiles();
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.Logger.LogInformation("Starting App");
 
 app.Run();
 return;
 
- 
+void InsertPermissionsIfNotExists(ApplicationDbContext context)
+{
+    if (context.Set<Permission>().Any())
+    {
+        return;
+    }
+
+    context.Set<Permission>().AddRange(
+        new Permission { Id = 1, PermissionName = PermissionTypes.CanBorrow },
+        new Permission { Id = 2, PermissionName = PermissionTypes.CanReturn },
+        new Permission { Id = 3, PermissionName = PermissionTypes.CanAddBook },
+        new Permission { Id = 4, PermissionName = PermissionTypes.CanGetBook },
+        new Permission { Id = 5, PermissionName = PermissionTypes.CanDeleteBook },
+        new Permission { Id = 6, PermissionName = PermissionTypes.CanEditBook }
+    );
+    context.SaveChanges();
+}
